@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bagan - Dive into a Sea of Knowledge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Ocean Wave Animations */
+        .ocean-waves {
+            background: linear-gradient(90deg,
+                transparent,
+                rgba(6, 182, 212, 0.1) 25%,
+                rgba(59, 130, 246, 0.1) 50%,
+                rgba(20, 184, 166, 0.1) 75%,
+                transparent
+            );
+            background-size: 200% 100%;
+            animation: oceanFlow 8s ease-in-out infinite;
+        }
+
+        @keyframes oceanFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Auto-scrolling image carousel */
+        .auto-scroll {
+            animation: autoScroll 25s linear infinite;
+        }
+
+        .auto-scroll-reverse {
+            animation: autoScrollReverse 30s linear infinite;
+        }
+
+        @keyframes autoScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        @keyframes autoScrollReverse {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Text reveal animations */
+        .text-reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: textReveal 1s ease-out forwards;
+        }
+
+        .text-reveal-delay-1 { animation-delay: 0.2s; }
+        .text-reveal-delay-2 { animation-delay: 0.4s; }
+        .text-reveal-delay-3 { animation-delay: 0.6s; }
+        .text-reveal-delay-4 { animation-delay: 0.8s; }
+
+        @keyframes textReveal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Slide in from left */
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            animation: slideInLeft 1s ease-out forwards;
+        }
+
+        @keyframes slideInLeft {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Slide in from right */
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(50px);
+            animation: slideInRight 1s ease-out forwards;
+        }
+
+        @keyframes slideInRight {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Fade in scale */
+        .fade-in-scale {
+            opacity: 0;
+            transform: scale(0.8);
+            animation: fadeInScale 1s ease-out forwards;
+        }
+
+        @keyframes fadeInScale {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Floating particles */
+        .floating-particles {
+            background-image:
+                radial-gradient(circle at 20% 80%, rgba(6, 182, 212, 0.1) 1px, transparent 1px),
+                radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+                radial-gradient(circle at 40% 40%, rgba(20, 184, 166, 0.1) 1px, transparent 1px);
+            background-size: 100px 100px, 150px 150px, 200px 200px;
+            animation: floatParticles 20s linear infinite;
+        }
+
+        @keyframes floatParticles {
+            0% { background-position: 0 0, 0 0, 0 0; }
+            100% { background-position: 100px 100px, -150px 150px, 200px -200px; }
+        }
+
+        /* Deep sea bubbles */
+        .deep-sea-bubbles {
+            background-image:
+                radial-gradient(circle at 15% 85%, rgba(255, 255, 255, 0.08) 3px, transparent 3px),
+                radial-gradient(circle at 45% 75%, rgba(255, 255, 255, 0.06) 4px, transparent 4px),
+                radial-gradient(circle at 75% 65%, rgba(255, 255, 255, 0.1) 2px, transparent 2px);
+            background-size: 300px 300px, 400px 400px, 200px 200px;
+            animation: deepBubbleRise 20s linear infinite;
+        }
+
+        @keyframes deepBubbleRise {
+            0% { background-position: 0 100%, 0 100%, 0 100%; }
+            100% { background-position: 0 -300px, 0 -400px, 0 -200px; }
+        }
+
+        /* Card hover effects */
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6, #14b8a6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Morphing shapes */
+        .morphing-shape {
+            animation: morph 8s ease-in-out infinite;
+        }
+
+        @keyframes morph {
+            0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+            50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+        }
+
+        /* Pulse effect */
+        .pulse-ring {
+            animation: pulseRing 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+        }
+
+        @keyframes pulseRing {
+            0% { transform: scale(0.8); }
+            80%, 100% { transform: scale(1.2); opacity: 0; }
+        }
+
+        /* Line clamp utilities */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Scrollbar styling */
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Lighthouse Animation */
+        .lighthouse {
+            width: 80px;
+            height: 120px;
+            background: linear-gradient(to top, #e5e7eb 0%, #f3f4f6 100%);
+            clip-path: polygon(30% 100%, 70% 100%, 60% 0%, 40% 0%);
+            animation: lighthouseGlow 4s ease-in-out infinite;
+            position: relative;
+        }
+
+        .lighthouse::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 200px;
+            height: 20px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: translateX(-50%) rotate(45deg);
+            transform-origin: 0 50%;
+            animation: lighthouseBeam 8s linear infinite;
+        }
+
+        @keyframes lighthouseGlow {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.4; }
+        }
+
+        @keyframes lighthouseBeam {
+            0% { transform: translateX(-50%) rotate(-45deg); }
+            100% { transform: translateX(-50%) rotate(45deg); }
+        }
+
+        /* Parallax effect */
+        .parallax {
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        /* Intersection Observer Animation */
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .animate-on-scroll.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Typewriter effect */
+        .typewriter {
+            overflow: hidden;
+            border-right: 3px solid #06b6d4;
+            white-space: nowrap;
+            animation: typing 4s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: #06b6d4; }
+        }
+
+        /* 3D Card Effect */
+        .card-3d {
+            perspective: 1000px;
+        }
+
+        .card-3d-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .card-3d:hover .card-3d-inner {
+            transform: rotateY(5deg) rotateX(5deg);
+        }
+
+        /* Glowing border */
+        .glow-border {
+            position: relative;
+            background: linear-gradient(45deg, transparent, rgba(6, 182, 212, 0.1), transparent);
+        }
+
+        .glow-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            padding: 2px;
+            background: linear-gradient(45deg, #06b6d4, #3b82f6, #14b8a6);
+            border-radius: inherit;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            animation: glowRotate 4s linear infinite;
+        }
+
+        @keyframes glowRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-cyan-50 via-blue-50 to-teal-50">
+    <!-- Hero Section -->
+    <div class="relative bg-gradient-to-br from-cyan-600 via-blue-700 to-teal-800 text-white overflow-hidden min-h-screen flex items-center">
+        <!-- Animated Background Elements -->
+        <div class="absolute inset-0 z-0">
+            <div class="lighthouse absolute right-10 top-10 opacity-20"></div>
+            <div class="floating-particles absolute inset-0"></div>
+            <div class="deep-sea-bubbles absolute inset-0"></div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="absolute top-0 left-0 right-0 z-20 pt-8">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-center space-x-1 bg-white/10 backdrop-blur-sm rounded-full p-1 max-w-4xl mx-auto">
+                    <a href="#" class="px-6 py-3 bg-white/20 rounded-full text-white font-semibold text-sm backdrop-blur-sm">O společnosti</a>
+                    <a href="#" class="px-6 py-3 hover:bg-white/10 rounded-full text-white/80 hover:text-white font-semibold text-sm transition-all">Služby a řešení</a>
+                    <a href="#" class="px-6 py-3 hover:bg-white/10 rounded-full text-white/80 hover:text-white font-semibold text-sm transition-all">Reference</a>
+                    <a href="#" class="px-6 py-3 hover:bg-white/10 rounded-full text-white/80 hover:text-white font-semibold text-sm transition-all">Kontakt</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hero Content -->
+        <div class="container mx-auto px-4 pt-32 pb-20 relative z-10">
+            <div class="max-w-4xl mx-auto text-center">
+                <div class="mb-8">
+                    <div class="inline-flex items-center bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 mb-6 text-reveal">
+                        <div class="w-3 h-3 bg-cyan-300 rounded-full mr-3 animate-pulse"></div>
+                        <span class="text-cyan-100 font-medium">Website Pemeliharaan Ekosistem Laut</span>
+                    </div>
+                </div>
+
+                <h1 class="text-6xl md:text-7xl font-bold mb-6 leading-tight text-reveal text-reveal-delay-1">
+                    Discover the
+                    <span class="gradient-text">Deep Sea</span>
+                    <br>of Wisdom
+                </h1>
+
+                <p class="text-xl md:text-2xl mb-12 text-cyan-100 max-w-3xl mx-auto leading-relaxed text-reveal text-reveal-delay-2">
+                    Navigate through depths of knowledge curated by our community of marine experts and ocean enthusiasts. Explore the mysteries beneath the waves.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-6 justify-center items-center text-reveal text-reveal-delay-3">
+                    <a href="#" class="group bg-white text-blue-700 px-10 py-5 rounded-full font-bold hover:bg-cyan-50 transition-all duration-300 shadow-2xl transform hover:-translate-y-2 hover:shadow-cyan-500/25 flex items-center">
+                        <svg class="w-6 h-6 mr-3 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        Explore Ocean Articles
+                        <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </a>
+
+                    <a href="#" class="group bg-transparent border-2 border-white/50 backdrop-blur-sm px-10 py-5 rounded-full font-bold hover:bg-white hover:text-blue-700 transition-all duration-300 flex items-center">
+                        <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                        </svg>
+                        Join Ocean Community
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ocean Wave Divider -->
+        <div class="absolute bottom-0 left-0 w-full">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" class="w-full h-auto">
+                <path fill="#f0fdff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Enhanced Search Section -->
+    <div class="container mx-auto px-4 py-16 -mt-32 relative z-30">
+        <div class="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20 max-w-6xl mx-auto glow-border">
+            <div class="text-center mb-8 animate-on-scroll">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Navigate the Knowledge Ocean</h2>
+                <p class="text-gray-600">Search through depths of wisdom and discoveries</p>
+            </div>
+
+            <form class="flex flex-col lg:flex-row gap-4 animate-on-scroll">
+                <div class="flex-grow relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="w-6 h-6 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <input type="text" placeholder="Dive into what interests you..." class="w-full pl-12 pr-6 py-5 rounded-2xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-lg bg-white/50 backdrop-blur-sm">
+                </div>
+                <div class="w-full lg:w-80">
+                    <select class="w-full px-6 py-5 rounded-2xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 appearance-none bg-white/50 backdrop-blur-sm text-lg">
+                        <option value="">All Ocean Depths</option>
+                        <option value="marine-biology">Marine Biology</option>
+                        <option value="ocean-conservation">Ocean Conservation</option>
+                        <option value="deep-sea-exploration">Deep Sea Exploration</option>
+                        <option value="marine-ecosystems">Marine Ecosystems</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="w-full lg:w-auto bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-10 py-5 rounded-2xl font-bold hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 shadow-xl transform hover:-translate-y-1 flex items-center justify-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Explore
+                    </button>
+                </div>
+            </form>
+
+            <!-- Popular Categories -->
+            <div class="mt-8 flex flex-wrap gap-3 justify-center animate-on-scroll">
+                <span class="text-sm text-gray-500 flex items-center mr-4 font-medium">Popular Currents:</span>
+                <a href="#" class="bg-gradient-to-r from-cyan-50 to-blue-50 text-cyan-700 px-6 py-2 rounded-full text-sm hover:from-cyan-100 hover:to-blue-100 transition-all duration-300 border border-cyan-200 hover:border-cyan-300 transform hover:scale-105">Marine Biology</a>
+                <a href="#" class="bg-gradient-to-r from-cyan-50 to-blue-50 text-cyan-700 px-6 py-2 rounded-full text-sm hover:from-cyan-100 hover:to-blue-100 transition-all duration-300 border border-cyan-200 hover:border-cyan-300 transform hover:scale-105">Ocean Conservation</a>
+                <a href="#" class="bg-gradient-to-r from-cyan-50 to-blue-50 text-cyan-700 px-6 py-2 rounded-full text-sm hover:from-cyan-100 hover:to-blue-100 transition-all duration-300 border border-cyan-200 hover:border-cyan-300 transform hover:scale-105">Deep Sea Research</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto-scrolling Ocean Gallery Section -->
+    <div class="py-20 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 overflow-hidden">
+        <div class="container mx-auto px-4 mb-12">
+            <div class="text-center animate-on-scroll">
+                <div class="inline-flex items-center bg-blue-100 text-blue-700 px-6 py-2 rounded-full mb-4 font-medium">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"></path>
+                        <path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                    Ocean Gallery
+                </div>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                    Discover the <span class="gradient-text">Underwater World</span>
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Immerse yourself in stunning visuals from the depths of our oceans
+                </p>
+            </div>
+        </div>
+
+        <!-- First Auto-scrolling Row -->
+        <div class="overflow-hidden mb-8">
+            <div class="flex auto-scroll">
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl morphing-shape">
+                    <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Coral Reef" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Seahorse" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Ocean Sunset" class="w-full h-full object-cover">
+                </div>
+                <!-- Duplicate for seamless loop -->
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Jellyfish" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Shark" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Tropical Fish" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Articles with Enhanced Visual Design -->
+    <div class="container mx-auto px-4 py-20 relative z-20">
+        <div class="text-center mb-16 animate-on-scroll">
+            <div class="inline-flex items-center bg-cyan-100 text-cyan-700 px-6 py-2 rounded-full mb-4 font-medium">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                </svg>
+                Featured Ocean Discoveries
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                Treasures from the <span class="gradient-text">Deep</span>
+            </h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Dive into our most captivating articles, handpicked from the vast ocean of knowledge
+            </p>
+        </div>
+
+        <!-- Enhanced Articles Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <!-- Article Card 1 -->
+            <div class="group card-hover card-3d bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden shadow-xl border border-white/50 h-full flex flex-col animate-on-scroll">
+                <div class="card-3d-inner">
+                    <div class="relative overflow-hidden h-64">
+                        <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Coral Reef Ecosystem" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute top-4 right-4">
+                            <span class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">Marine Biology</span>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </div>
+
+                    <div class="p-8 flex-grow flex flex-col">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center text-white font-bold text-sm">DR</div>
+                            <div class="ml-3">
+                                <span class="text-sm font-semibold text-gray-700">Dr. Marina Explorer</span>
+                                <p class="text-xs text-gray-500">Mar 15, 2024</p>
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-bold mb-4 text-gray-800 group-hover:text-cyan-700 transition-colors line-clamp-2 flex-grow">
+                            <a href="#">The Hidden World of Coral Reef Ecosystems</a>
+                        </h3>
+
+                        <p class="text-gray-600 mb-6 line-clamp-3 flex-grow">
+                            Discover the intricate relationships between marine species in coral reef environments and learn how these underwater cities sustain millions of organisms.
+                        </p>
+
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="text-sm text-gray-500 ml-1.5 font-medium">248</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                    </svg>
+                                    <span class="text-sm text-gray-500 ml-1.5 font-medium">32</span>
+                                </div>
+                            </div>
+                            <a href="#" class="text-cyan-600 hover:text-cyan-700 font-semibold text-sm flex items-center group">
+                                Read More
+                                <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article Card 2 -->
+            <div class="group card-hover card-3d bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden shadow-xl border border-white/50 h-full flex flex-col animate-on-scroll">
+                <div class="card-3d-inner">
+                    <div class="relative overflow-hidden h-64">
+                        <img src="https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Deep Sea Exploration" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute top-4 right-4">
+                            <span class="bg-gradient-to-r from-purple-500 to-pink-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">Deep Sea</span>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </div>
+
+                    <div class="p-8 flex-grow flex flex-col">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold text-sm">OC</div>
+                            <div class="ml-3">
+                                <span class="text-sm font-semibold text-gray-700">Ocean Chronicles</span>
+                                <p class="text-xs text-gray-500">Mar 12, 2024</p>
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-bold mb-4 text-gray-800 group-hover:text-cyan-700 transition-colors line-clamp-2 flex-grow">
+                            <a href="#">Journey to the Abyss: New Species Discovered</a>
+                        </h3>
+
+                        <p class="text-gray-600 mb-6 line-clamp-3 flex-grow">
+                            Scientists have uncovered remarkable new species in the deepest parts of our oceans, revealing insights into life in extreme conditions and evolutionary adaptations.
+                        </p>
+
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="text-sm text-gray-500 ml-1.5 font-medium">156</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                    </svg>
+                                    <span class="text-sm text-gray-500 ml-1.5 font-medium">28</span>
+                                </div>
+                            </div>
+                            <a href="#" class="text-cyan-600 hover:text-cyan-700 font-semibold text-sm flex items-center group">
+                                Read More
+                                <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article Card 3 -->
+            <div class="group card-hover card-3d bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden shadow-xl border border-white/50 h-full flex flex-col animate-on-scroll">
+                <div class="card-3d-inner">
+                    <div class="relative overflow-hidden h-64">
+                        <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Ocean Conservation" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute top-4 right-4">
+                            <span class="bg-gradient-to-r from-green-500 to-teal-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">Conservation</span>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </div>
+
+                    <div class="p-8 flex-grow flex flex-col">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm">EC</div>
+                            <div class="ml-3">
+                                <span class="text-sm font-semibold text-gray-700">EcoMarine Team</span>
+                                <p class="text-xs text-gray-500">Mar 10, 2024</p>
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-bold mb-4 text-gray-800 group-hover:text-cyan-700 transition-colors line-clamp-2 flex-grow">
+                            <a href="#">Protecting Our Blue Planet: Conservation Success Stories</a>
+                        </h3>
+
+                        <p class="text-gray-600 mb-6 line-clamp-3 flex-grow">
+                            Explore inspiring conservation efforts that are making a real difference in protecting marine ecosystems and the incredible species that call them home.
+                        </p>
+
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="text-sm text-gray-500 ml-1.5 font-medium">89</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                    </svg>
+                                    <span class="text-sm text-gray-500 ml-1.5 font-medium">15</span>
+                                </div>
+                            </div>
+                            <a href="#" class="text-cyan-600 hover:text-cyan-700 font-semibold text-sm flex items-center group">
+                                Read More
+                                <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View All Articles Button -->
+        <div class="text-center animate-on-scroll">
+            <a href="#" class="inline-flex items-center bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-full font-bold hover:from-cyan-600 hover:to-blue-700 transition-all duration-300 shadow-xl transform hover:-translate-y-1 hover:shadow-cyan-500/25">
+                <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                Explore All Ocean Articles
+                <svg class="w-5 h-5 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Section with Animated Counters -->
+    <div class="py-20 bg-gradient-to-r from-cyan-600 via-blue-700 to-teal-800 text-white relative overflow-hidden">
+        <div class="absolute inset-0 floating-particles"></div>
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="text-center mb-16 animate-on-scroll">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                    Ocean <span class="gradient-text text-white">Impact</span> by Numbers
+                </h2>
+                <p class="text-xl text-cyan-100 max-w-3xl mx-auto">
+                    Discover the scale of our ocean knowledge community and conservation efforts
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="text-center p-8 bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 card-hover animate-on-scroll">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-cyan-400 rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-4xl font-bold mb-2 text-white">2,847</h3>
+                    <p class="text-cyan-100 font-medium">Articles Published</p>
+                </div>
+
+                <div class="text-center p-8 bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 card-hover animate-on-scroll">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-blue-400 rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-4xl font-bold mb-2 text-white">45,392</h3>
+                    <p class="text-cyan-100 font-medium">Community Members</p>
+                </div>
+
+                <div class="text-center p-8 bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 card-hover animate-on-scroll">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-teal-400 rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-4xl font-bold mb-2 text-white">156</h3>
+                    <p class="text-cyan-100 font-medium">Countries Reached</p>
+                </div>
+
+                <div class="text-center p-8 bg-white/10 backdrop-blur-sm rounded-3xl border border-white/20 card-hover animate-on-scroll">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-purple-400 rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-4xl font-bold mb-2 text-white">892K</h3>
+                    <p class="text-cyan-100 font-medium">Conservation Actions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Ocean Explorer Section -->
+    <div class="py-20 bg-gradient-to-b from-blue-50 to-cyan-50 relative overflow-hidden">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16 animate-on-scroll">
+                <div class="inline-flex items-center bg-gradient-to-r from-cyan-100 to-blue-100 text-cyan-700 px-6 py-2 rounded-full mb-4 font-medium">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                    Interactive Experience
+                </div>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                    Dive Deeper with <span class="gradient-text">Ocean Explorer</span>
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Experience interactive marine environments and learn about ocean ecosystems through immersive content
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Interactive Cards -->
+                <div class="space-y-6 animate-on-scroll slide-in-left">
+                    <div class="group bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-white/50 card-hover glow-border">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center mr-4">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">q=80" alt="Sea Turtle" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Deep Sea" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Marine Life" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Ocean Waves" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Whale" class="w-full h-full object-cover">
+                </div>
+                <!-- Duplicate for seamless loop -->
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Coral Reef" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Sea Turtle" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Deep Sea" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </div>
+
+        <!-- Second Auto-scrolling Row (Reverse Direction) -->
+        <div class="overflow-hidden">
+            <div class="flex auto-scroll-reverse">
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Jellyfish" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Shark" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Tropical Fish" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Underwater Cave" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-shrink-0 w-80 h-60 mx-4 rounded-2xl overflow-hidden shadow-xl">
+                    <img src="https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&
