@@ -14,8 +14,9 @@ return new class extends Migration
             $table->unsignedBigInteger('community_id');
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('muted_by');
-            $table->timestamp('muted_at')->useCurrent(); // Set to current time by default
-            $table->timestamp('unmute_at')->nullable(); //
+            $table->string('reason')->nullable();
+            $table->timestamp('muted_at')->useCurrent();
+            $table->timestamp('unmute_at')->nullable();
             $table->timestamps();
 
             $table->foreign('community_id')->references('community_id')->on('communities')->onDelete('cascade');
@@ -26,7 +27,7 @@ return new class extends Migration
         });
     }
 
-   
+
     public function down(): void
     {
         Schema::dropIfExists('mute_users');

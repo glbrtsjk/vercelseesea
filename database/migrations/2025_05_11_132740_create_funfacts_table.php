@@ -15,7 +15,7 @@ return new class extends Migration
             $table->text('deskripsi');
             $table->string('urutan_animasi');
             $table->foreignId('article_id')->constrained('articles', 'article_id')->onDelete('cascade');
-            $table->boolean('is_highlighted')->default(false); // New field for featured funfacts
+            $table->boolean('is_highlighted')->default(false); 
             $table->timestamps();
         });
     }

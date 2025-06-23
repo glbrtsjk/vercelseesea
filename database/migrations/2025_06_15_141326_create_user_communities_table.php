@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreign('created_by')
                   ->references('user_id')
                   ->on('users')
-                  ->onDelete('cascade'); // Change to cascade - if user deleted, their communities are deleted too
+                  ->onDelete('cascade');
         });
     }
 

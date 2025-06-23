@@ -12,7 +12,7 @@ return new class extends Migration
         Schema::create('like_dislikes', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->morphs('likeable'); // Creates likeable_id and likeable_type columns
+            $table->morphs('likeable'); 
             $table->enum('type', ['like', 'dislike']);
             $table->timestamps();
 
@@ -25,7 +25,7 @@ return new class extends Migration
         });
     }
 
-    
+
     public function down(): void
     {
         Schema::dropIfExists('like_dislikes');

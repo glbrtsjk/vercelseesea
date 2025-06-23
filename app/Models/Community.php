@@ -51,7 +51,7 @@ class Community extends Model
         return $this->lock()->exists();
     }
 
-    
+
     public function bannedUsers()
     {
         return $this->hasMany(BannedUser::class, 'community_id', 'community_id');

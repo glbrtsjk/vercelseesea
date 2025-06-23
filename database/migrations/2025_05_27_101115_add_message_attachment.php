@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('messages', function (Blueprint $table) {
-            $table->string('lampiran')->nullable()->after('gambar');
+            $table->string('lampiran')->nullable()->after('isi_pesan');
             $table->string('lampiran_nama')->nullable()->after('lampiran');
             $table->string('lampiran_tipe')->nullable()->after('lampiran_nama');
 
