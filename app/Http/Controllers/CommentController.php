@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Controllers;
 
 use App\Models\Article;
@@ -15,59 +16,59 @@ class CommentController extends Controller
     }
 
     /**
-     * Store a newly created comment in storage.
+     * Menyimpan komentar baru ke dalam penyimpanan.
      */
     public function store(Request $request)
     {
-        // Validate request data
+        // Validasi data permintaan
         $request->validate([
             'article_id' => 'required|exists:articles,article_id',
-            'konten' => 'required|string',
+            'konten' => 'required|string|max:1000',
         ]);
 
-        // Create comment
-        Comment::create([
-            'konten' => $request->konten,
-            'tgl_komen' => now(),
+        // Membuat komentar
+        $comment = Comment::create([
+            'isi_komentar' => $request->konten,
+            'tgl_komentar' => now(),
             'user_id' => Auth::id(),
             'article_id' => $request->article_id,
         ]);
+        $article = Article::findOrFail($request->article_id);
 
-        return redirect()->route('articles.show', $request->article_id)
-            ->with('success', 'Comment posted successfully')
-            ->fragment('comments');
+        // Mengalihkan ke artikel menggunakan parameter slug yang sesuai
+        return redirect()->route('articles.show', $article->slug)->withFragment('comments');
     }
 
     /**
-     * Update the specified comment in storage.
+     * Memperbarui komentar tertentu di dalam penyimpanan.
      */
     public function update(Request $request, Comment $comment)
     {
-        // Check if user is authorized to update
+        // Memeriksa apakah pengguna berwenang untuk memperbarui
         if (Auth::id() != $comment->user_id && !Auth::user()->isAdmin()) {
             abort(403);
         }
 
-        // Validate request
+        // Validasi permintaan
         $request->validate([
             'konten' => 'required|string',
         ]);
 
-        // Update comment
-        $comment->konten = $request->konten;
+        // Memperbarui komentar
+        $comment->isi_komentar = $request->konten;
         $comment->save();
+        $article = Article::findOrFail($comment->article_id);
 
-        return redirect()->route('articles.show', $comment->article_id)
-            ->with('success', 'Comment updated successfully')
-            ->fragment('comments');
+        // Mengalihkan ke artikel menggunakan parameter slug yang sesuai
+        return redirect()->route('articles.show', $article->slug)->withFragment('comments');
     }
 
     /**
-     * Remove the specified comment from storage.
+     * Menghapus komentar tertentu dari penyimpanan.
      */
     public function destroy(Comment $comment)
     {
-        // Check if user is authorized to delete
+        // Memeriksa apakah pengguna berwenang untuk menghapus
         if (Auth::id() != $comment->user_id && !Auth::user()->isAdmin()) {
             abort(403);
         }
@@ -75,8 +76,9 @@ class CommentController extends Controller
         $articleId = $comment->article_id;
         $comment->delete();
 
-        return redirect()->route('articles.show', $articleId)
-            ->with('success', 'Comment deleted successfully')
-            ->fragment('comments');
+        $article = Article::findOrFail($articleId);
+
+        // Mengalihkan ke artikel menggunakan parameter slug yang sesuai
+        return redirect()->route('articles.show', $article->slug)->withFragment('comments');
     }
 }

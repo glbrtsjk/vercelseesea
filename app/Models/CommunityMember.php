@@ -3,9 +3,9 @@
  namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 
-class CommunityMember extends Model
+class CommunityMember extends Pivot
 {
     use HasFactory;
 
@@ -14,7 +14,7 @@ class CommunityMember extends Model
      *
      * @var string
      */
-    protected $table = 'community_user_pivot';
+    protected $table = 'community_user_pivots';
 
     /**
      * The attributes that are mass assignable.
@@ -25,29 +25,21 @@ class CommunityMember extends Model
         'user_id',
         'community_id',
         'tg_gabung',
-        'role' // Based on your Community model, it appears this field exists in the pivot table
+        'role' 
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array
-     */
+
     protected $casts = [
         'tg_gabung' => 'date',
     ];
 
-    /**
-     * Get the user that is a member.
-     */
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
-    /**
-     * Get the community to which the user belongs.
-     */
+
     public function community()
     {
         return $this->belongsTo(Community::class, 'community_id', 'community_id');

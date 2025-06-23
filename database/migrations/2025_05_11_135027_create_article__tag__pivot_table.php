@@ -13,7 +13,6 @@ return new class extends Migration
             $table->foreignId('tag_id')->constrained('tags', 'tag_id')->onDelete('cascade');
             $table->timestamps();
 
-            // Create a composite primary key
             $table->primary(['article_id', 'tag_id']);
         });
     }

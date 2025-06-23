@@ -8,16 +8,13 @@ return new class extends Migration
 {
    public function up(): void
     {
-        // Create messages table
         Schema::create('messages', function (Blueprint $table) {
             $table->id('message_id');
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('community_id');
             $table->text('isi_pesan')->nullable();
-            $table->string('gambar')->nullable();
-            $table->timestamp('tgl_pesan');
+           $table->timestamp('tgl_pesan');
 
-            // Foreign keys
             $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->foreign('community_id')->references('community_id')->on('communities')->onDelete('cascade');
         });

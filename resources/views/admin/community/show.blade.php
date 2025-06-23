@@ -1,4 +1,3 @@
-<!-- resources/views/communities/show.blade.php -->
 @extends('layouts.app')
 
 @section('title', $community->nama_komunitas)
@@ -53,19 +52,15 @@
     </div>
 
     <div class="row">
-        <!-- Main Content Area -->
         <div class="col-lg-8">
-            <!-- Add this link in admin.community.show.blade.php where appropriate -->
         @if(Auth::check() && Auth::user()->can('moderate', $community))
         <a href="{{ route('admin.communities.moderation', $community) }}" class="btn btn-warning">
         <i class="fas fa-gavel"></i> {{ __('Moderation Tools') }}
        </a>
        @endif
             @if($isMember || Auth::user()->can('moderate', $community))
-                <!-- Chat Section -->
                 @include('communities.chat', ['community' => $community, 'messages' => $messages, 'members' => $members])
             @else
-                <!-- Preview for non-members -->
                 <div class="bg-white rounded shadow-sm p-4 mb-4">
                     <div class="text-center py-5">
                         <i class="fas fa-lock fa-4x text-muted mb-3"></i>
@@ -92,9 +87,7 @@
             @endif
         </div>
 
-        <!-- Sidebar -->
         <div class="col-lg-4">
-            <!-- Members Section -->
             <div class="bg-white rounded shadow-sm p-4 mb-4">
                 <h5 class="border-bottom pb-2 mb-3">
                     <i class="fas fa-users"></i> {{ __('Members') }}
@@ -128,7 +121,6 @@
                 </div>
             </div>
 
-            <!-- Community Info -->
             <div class="bg-white rounded shadow-sm p-4">
                 <h5 class="border-bottom pb-2 mb-3">
                     <i class="fas fa-info-circle"></i> {{ __('Community Info') }}
@@ -156,7 +148,6 @@
     </div>
 </div>
 
-<!-- All Members Modal -->
 <div class="modal fade" id="allMembersModal" tabindex="-1" aria-labelledby="allMembersModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -192,7 +183,6 @@
     </div>
 </div>
 
-<!-- Description Modal -->
 <div class="modal fade" id="descriptionModal" tabindex="-1" aria-labelledby="descriptionModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -214,7 +204,6 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize any needed scripts for the community page
     });
 </script>
 @endsection

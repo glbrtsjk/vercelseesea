@@ -32,28 +32,28 @@ class LikeorDislikeController extends Controller
 
         $exists = $modelType::find($modelId);
         if (!$exists) {
-            return back()->with('error', 'The content you are trying to like/dislike does not exist.');
+            return back()->with('error', 'konten yang anda ingin like/dislike tidak ditemukan.');
         }
 
-        // Find existing like/dislike by this user for this content
+        // temukan like/dislike yang sudah ada dari user pada suatu komen
         $existingLikeDislike = LikeDislike::where('user_id', Auth::id())
             ->where('likeable_id', $modelId)
             ->where('likeable_type', $modelType)
             ->first();
 
         if ($existingLikeDislike) {
-            // If same type, remove it (toggle off)
+            // jika ada like/dislike yang sudah ada
             if ($existingLikeDislike->type == $request->type) {
                 $existingLikeDislike->delete();
                 $message = ucfirst($request->type) . ' removed successfully.';
             } else {
-                // If different type, update it
+                // jika tipe berbeda, update tipe yang ada
                 $existingLikeDislike->type = $request->type;
                 $existingLikeDislike->save();
                 $message = ucfirst($request->type) . ' added successfully.';
             }
         } else {
-            // Create new like/dislike
+            // buat like/dislike baru
             LikeDislike::create([
                 'type' => $request->type,
                 'user_id' => Auth::id(),
@@ -63,7 +63,7 @@ class LikeorDislikeController extends Controller
             $message = ucfirst($request->type) . ' added successfully.';
         }
 
-        // Redirect back to the specified URL
+        // arahkan kembali ke URL yang diberikan dengan pesan sukses
         return redirect($request->redirect_url)
             ->with('success', $message)
             ->withFragment(isset($request->fragment) ? $request->fragment : '');
@@ -81,14 +81,14 @@ class LikeorDislikeController extends Controller
             'redirect_url' => 'required|string',
         ]);
 
-        // Delete the like/dislike if it exists
+        // hapus like/dislike yang ada
         LikeDislike::where('user_id', Auth::id())
             ->where('likeable_id', $request->model_id)
             ->where('likeable_type', $request->model_type)
             ->delete();
 
         return redirect($request->redirect_url)
-            ->with('success', 'Reaction removed successfully')
+            ->with('success', 'reaksi berhasil dihapus.')
             ->withFragment(isset($request->fragment) ? $request->fragment : '');
     }
 }

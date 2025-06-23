@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\User;
+use App\Models\Category;
 use App\Models\Community;
 use App\Models\Funfact;
 use App\Models\Tag;
@@ -28,40 +29,40 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Display the admin dashboard.
+     * Menampilkan dashboard admin.
      */
     public function index()
     {
-        // Statistics for dashboard cards
+        // Statistik untuk kartu dashboard
         $totalArticles = Article::count();
         $pendingArticlesCount = Article::where('status', 'pending')->count();
         $totalUsers = User::count();
         $totalCommunities = Community::count();
 
-        // Get recent pending articles
+        // Mendapatkan artikel yang tertunda terbaru
         $recentArticles = Article::where('status', 'pending')
             ->with('user')
             ->latest('tgl_upload')
             ->paginate(6);
 
-        // Get recent funfacts
+        // Mendapatkan fakta menarik terbaru
         $recentFunfacts = Funfact::latest()
             ->take(5)
             ->get();
 
-        // Get popular tags with article count
+        // Mendapatkan tag populer dengan jumlah artikel
         $popularTags = Tag::withCount('articles')
             ->orderBy('articles_count', 'desc')
             ->take(10)
             ->get();
 
-        // Get recent users with article count
+        // Mendapatkan pengguna terbaru dengan jumlah artikel
         $recentUsers = User::withCount('articles')
             ->latest()
             ->take(5)
             ->get();
 
-        return view('admin.dashboard.index', compact(
+        return view('admin.dashboard.index1', compact(
             'totalArticles',
             'pendingArticlesCount',
             'totalUsers',
@@ -74,13 +75,13 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Display admin profile page.
+     * Menampilkan halaman profil admin.
      */
     public function profile()
     {
         $user = Auth::user();
 
-        // Get admin's stats
+        // Mendapatkan statistik admin
         $stats = [
             'articles_approved' => Article::where('status', 'published')->count(),
             'articles_rejected' => Article::where('status', 'rejected')->count(),
@@ -88,26 +89,26 @@ class AdminDashboardController extends Controller
             'admin_since' => $user->created_at->format('M Y')
         ];
 
-        return view('admin.dashboard.profil', compact('user', 'stats'));
+        return view('admin.dashboard.profil.index', compact('user', 'stats'));
     }
 
     /**
-     * Display admin profile edit form.
+     * Menampilkan formulir edit profil admin.
      */
     public function editProfile()
     {
         $user = Auth::user();
-        return view('admin.edit-profile', compact('user'));
+        return view('admin.dashboard.profil.edit-profil', compact('user'));
     }
 
     /**
-     * Update admin profile information.
+     * Memperbarui informasi profil admin.
      */
     public function updateProfile(Request $request)
     {
         $user = Auth::user();
 
-        // Validate request data
+        // Validasi data permintaan
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->user_id . ',user_id',
@@ -115,14 +116,14 @@ class AdminDashboardController extends Controller
             'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Update user details
+        // Memperbarui detail pengguna
         $user->name = $request->name;
         $user->email = $request->email;
         $user->bio = $request->bio;
 
-        // Process profile photo if uploaded
+        // Memproses foto profil jika diunggah
         if ($request->hasFile('foto_profil')) {
-            // Delete old photo if exists
+            // Menghapus foto lama jika ada
             if ($user->foto_profil) {
                 Storage::delete($user->foto_profil);
             }
@@ -131,158 +132,248 @@ class AdminDashboardController extends Controller
 
         $user->save();
 
-        return redirect()->route('admin.dashboard.profil')->with('success', 'Profile updated successfully!');
+        return redirect()->route('admin.profile')->with('success', 'Profil berhasil diupdate!');
     }
 
     /**
-     * Display change password form.
+     * Menampilkan formulir ubah kata sandi.
      */
     public function changePassword()
     {
-        return view('admin.dashboard.changepassword');
+        return view('admin.dashboard.profil.changepassword');
     }
 
     /**
-     * Update admin's password.
+     * Memperbarui kata sandi admin.
      */
     public function updatePassword(Request $request)
     {
         $user = Auth::user();
 
-        // Validate request data
+        // Validasi data permintaan
         $request->validate([
             'current_password' => 'required|string',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        // Verify current password
+        // Verifikasi kata sandi saat ini
         if (!Hash::check($request->current_password, $user->password)) {
-            return back()->with('error', 'Current password is incorrect');
+            return back()->with('error', 'Kata sandi saat ini salah');
         }
 
-        // Update password
+        // Memperbarui kata sandi
         $user->password = Hash::make($request->password);
         $user->save();
 
-       return redirect()->route('admin.dashboard.profil')->with('success', 'Password changed successfully!');
+       return redirect()->route('admin.dashboard.profil')->with('success', 'Kata sandi berhasil diubah!');
     }
 
-    public function articles()
+    public function articles(Request $request)
     {
-        $articles = Article::with(['user', 'category'])
-            ->withCount(['comments', 'reactions'])
-            ->orderBy('tgl_upload', 'desc')
-            ->paginate(10);
+        $search = $request->input('search');
+        $categoryFilter = $request->input('category_filter');
+        $statusFilter = $request->input('status');
 
-        return view('admin.dashboard.article', compact('articles'));
+        $articleQuery = Article::with(['user', 'category'])
+            ->withCount(['comments', 'reactions']);
+
+        // Menerapkan filter pencarian jika disediakan
+        if ($search) {
+            $articleQuery->where(function($query) use ($search) {
+                $query->where('judul', 'like', '%' . $search . '%')
+                    ->orWhere('konten_isi_artikel', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Menerapkan filter kategori jika disediakan
+        if ($categoryFilter) {
+            $articleQuery->where('category_id', $categoryFilter);
+        }
+
+        // Menerapkan filter status jika disediakan
+        if ($statusFilter) {
+            $articleQuery->where('status', $statusFilter);
+        }
+
+        $articleQuery->orderBy('tgl_upload', 'desc');
+
+        // Mendapatkan hasil yang dipaginasi
+        $articles = $articleQuery->paginate(10)->withQueryString();
+
+        $categories = Category::all();
+
+        return view('admin.dashboard.article', compact('articles', 'categories'));
     }
 
-public function community(Request $request)
-{
-    // Get the current admin
-    $admin = Auth::user();
+    public function funfacts(Request $request)
+    {
+        // Mendapatkan parameter query untuk filter dan pengurutan
+        $search = $request->input('search');
+        $sort = $request->input('sort', 'latest');
 
-    // Get query parameters for filtering and sorting
-    $search = $request->input('search');
-    $sort = $request->input('sort', 'newest');
+        // Query dasar
+        $funfactQuery = Funfact::query();
 
-    // Base query - get communities created by this admin
-    $communityQuery = Community::where('created_by', $admin->user_id)
-        ->withCount('users');
+        // Menerapkan filter pencarian jika disediakan
+        if ($search) {
+            $funfactQuery->where(function($query) use ($search) {
+                $query->where('judul', 'like', '%' . $search . '%')
+                    ->orWhere('deskripsi', 'like', '%' . $search . '%');
+            });
+        }
 
-    // Apply search filter if provided
-    if ($search) {
-        $communityQuery->where(function($query) use ($search) {
-            $query->where('nama_komunitas', 'like', '%' . $search . '%')
-                ->orWhere('deskripsi', 'like', '%' . $search . '%');
-        });
+        // Menerapkan pengurutan
+        switch ($sort) {
+            case 'oldest':
+                $funfactQuery->orderBy('created_at', 'asc');
+                break;
+            case 'title_asc':
+                $funfactQuery->orderBy('judul', 'asc');
+                break;
+            case 'title_desc':
+                $funfactQuery->orderBy('judul', 'desc');
+                break;
+            case 'latest':
+            default:
+                $funfactQuery->orderBy('created_at', 'desc');
+                break;
+        }
+
+        // Mendapatkan fakta menarik yang dipaginasi
+        $funfacts = $funfactQuery->paginate(12);
+
+        // Mendapatkan statistik untuk kartu
+        $totalFunfacts = Funfact::count();
+        $addedThisMonth = Funfact::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+        $withImages = Funfact::whereNotNull('gambar')->count();
+
+        return view('admin.dashboard.funfact', compact(
+            'funfacts',
+            'totalFunfacts',
+            'addedThisMonth',
+            'withImages'
+        ));
     }
 
-    // Apply sorting
-    switch ($sort) {
-        case 'oldest':
-            $communityQuery->orderBy('created_at', 'asc');
-            break;
-        case 'members_high':
-            $communityQuery->orderBy('users_count', 'desc');
-            break;
-        case 'members_low':
-            $communityQuery->orderBy('users_count', 'asc');
-            break;
-        case 'name_asc':
-            $communityQuery->orderBy('nama_komunitas', 'asc');
-            break;
-        case 'name_desc':
-            $communityQuery->orderBy('nama_komunitas', 'desc');
-            break;
-        case 'newest':
-        default:
-            $communityQuery->orderBy('created_at', 'desc');
-            break;
+    public function community(Request $request)
+    {
+        // Mendapatkan admin saat ini
+        $admin = Auth::user();
+
+        // Mendapatkan parameter query untuk filter dan pengurutan
+        $search = $request->input('search');
+        $sort = $request->input('sort', 'newest');
+
+        // Query dasar - mendapatkan komunitas yang dibuat oleh admin ini
+        $communityQuery = Community::where(function($query) use ($admin) {
+            $query->where('created_by', $admin->user_id)
+                ->orWhereNull('created_by');
+        })->withCount('users');
+
+
+        // Menerapkan filter pencarian jika disediakan
+        if ($search) {
+            $communityQuery->where(function($query) use ($search) {
+                $query->where('nama_komunitas', 'like', '%' . $search . '%')
+                    ->orWhere('deskripsi', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Menerapkan pengurutan
+        switch ($sort) {
+            case 'oldest':
+                $communityQuery->orderBy('created_at', 'asc');
+                break;
+            case 'members_high':
+                $communityQuery->orderBy('users_count', 'desc');
+                break;
+            case 'members_low':
+                $communityQuery->orderBy('users_count', 'asc');
+                break;
+            case 'name_asc':
+                $communityQuery->orderBy('nama_komunitas', 'asc');
+                break;
+            case 'name_desc':
+                $communityQuery->orderBy('nama_komunitas', 'desc');
+                break;
+            case 'newest':
+            default:
+                $communityQuery->orderBy('created_at', 'desc');
+                break;
+        }
+
+        // Mendapatkan hasil yang dipaginasi
+        $communities = $communityQuery->paginate(10);
+        $communityIds = Community::where(function($query) use ($admin) {
+            $query->where('created_by', $admin->user_id)
+                ->orWhereNull('created_by');
+        })->pluck('community_id');
+
+        // Mendapatkan statistik untuk kartu
+        $totalCommunities = Community::where(function($query) use ($admin) {
+            $query->where('created_by', $admin->user_id)
+                ->orWhereNull('created_by');
+        })->count();
+
+        $activeCommunities = Community::where(function($query) use ($admin) {
+            $query->where('created_by', $admin->user_id)
+                ->orWhereNull('created_by');
+        })->where('is_active', true)->count();
+
+
+        $totalMembers = DB::table('community_user_pivots')
+            ->whereIn('community_id', $communityIds)
+            ->count();
+
+        $newThisMonth = Community::where(function($query) use ($admin) {
+            $query->where('created_by', $admin->user_id)
+                ->orWhereNull('created_by');
+        })->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+
+
+        $recentActivity = DB::table('community_user_pivots')
+            ->join('users', 'community_user_pivots.user_id', '=', 'users.user_id')
+            ->join('communities', 'community_user_pivots.community_id', '=', 'communities.community_id')
+            ->whereIn('community_user_pivots.community_id', $communityIds)
+            ->select(
+                'users.name as user_name',
+                'users.foto_profil',
+                'users.user_id',
+                'communities.nama_komunitas',
+                'communities.community_id',
+                'community_user_pivots.tg_gabung',
+                DB::raw("'bergabung' as action") // Diubah dari 'joined' ke 'bergabung'
+            )
+            ->orderBy('community_user_pivots.tg_gabung', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function($item) {
+                return (object)[
+                    'user' => (object)[
+                        'name' => $item->user_name,
+                        'foto_profil' => $item->foto_profil,
+                        'user_id' => $item->user_id
+                    ],
+                    'community' => (object)[
+                        'nama_komunitas' => $item->nama_komunitas,
+                        'community_id' => $item->community_id
+                    ],
+                    'action' => 'bergabung', // Diubah dari 'joined' ke 'bergabung'
+                    'created_at' => \Carbon\Carbon::parse($item->tg_gabung)
+                ];
+            });
+
+        return view('admin.dashboard.community', compact(
+            'communities',
+            'totalCommunities',
+            'activeCommunities',
+            'totalMembers',
+            'newThisMonth',
+            'recentActivity'
+        ));
     }
-
-    // Get paginated results
-    $communities = $communityQuery->paginate(10);
-
-    // Get statistics for cards
-    $totalCommunities = Community::where('created_by', $admin->user_id)->count();
-    $activeCommunities = Community::where('created_by', $admin->user_id)
-        ->where('is_active', true)
-        ->count();
-
-    // Get total members across all admin's communities
-    $totalMembers = DB::table('community_user_pivots')
-        ->join('communities', 'community_user_pivots.community_id', '=', 'communities.community_id')
-        ->where('communities.created_by', $admin->user_id)
-        ->count();
-
-    $newThisMonth = Community::where('created_by', $admin->user_id)
-        ->whereMonth('created_at', now()->month)
-        ->whereYear('created_at', now()->year)
-        ->count();
-
-    // Get recent member activity in admin's communities (joins)
-    $communityIds = Community::where('created_by', $admin->user_id)->pluck('community_id');
-
-    $recentActivity = DB::table('community_user_pivots')
-        ->join('users', 'community_user_pivots.user_id', '=', 'users.user_id')
-        ->join('communities', 'community_user_pivots.community_id', '=', 'communities.community_id')
-        ->whereIn('community_user_pivots.community_id', $communityIds)
-        ->select(
-            'users.name as user_name',
-            'users.foto_profil',
-            'users.user_id',
-            'communities.nama_komunitas',
-            'communities.community_id',
-            'community_user_pivots.tg_gabung',
-            DB::raw("'joined' as action")
-        )
-        ->orderBy('community_user_pivots.tg_gabung', 'desc')
-        ->limit(10)
-        ->get()
-        ->map(function($item) {
-            return (object)[
-                'user' => (object)[
-                    'name' => $item->user_name,
-                    'foto_profil' => $item->foto_profil,
-                    'user_id' => $item->user_id
-                ],
-                'community' => (object)[
-                    'nama_komunitas' => $item->nama_komunitas,
-                    'community_id' => $item->community_id
-                ],
-                'action' => 'joined',
-                'created_at' => \Carbon\Carbon::parse($item->tg_gabung)
-            ];
-        });
-
-    return view('admin.dashboard.community', compact(
-        'communities',
-        'totalCommunities',
-        'activeCommunities',
-        'totalMembers',
-        'newThisMonth',
-        'recentActivity'
-    ));
-}
 }

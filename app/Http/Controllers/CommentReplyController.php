@@ -1,8 +1,10 @@
 <?php
 
+
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Models\Article;
 use App\Models\CommentReply;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,66 +17,81 @@ class CommentReplyController extends Controller
     }
 
     /**
-     * Store a newly created comment reply in storage.
+     * Menyimpan balasan komentar baru ke dalam penyimpanan.
      */
     public function store(Request $request, Comment $comment)
     {
-        // Validate request
+        // Validasi permintaan
+
+        //dd($request->all());
+
+        if (Auth::user()->is_banned) {
+            return redirect()->route('articles.index')
+                ->with('error', 'Akun Kamu telah diblokir. Kamu tidak dapat membuat artikel.');
+        }
+
         $request->validate([
-            'konten' => 'required|string'
+            'isi_balasan' => 'required|string'
         ]);
 
-        // Create reply
+        // Membuat balasan
         CommentReply::create([
-            'isi_balasan' => $request->konten,
+            'isi_balasan' => $request->isi_balasan,
             'tgl_balasan' => now(),
             'comment_id' => $comment->comment_id,
             'user_id' => Auth::id(),
         ]);
+        $article = Article::findOrFail($comment->article_id);
 
-        return redirect()->route('articles.show', $comment->article_id)
-            ->with('success', 'Reply posted successfully')
-            ->fragment('comment-' . $comment->comment_id);
+        return redirect()->route('articles.show', $article->slug)
+            ->with('success', 'Balasan berhasil dibuat')
+            ->withFragment('comment-' . $comment->comment_id);
     }
 
     /**
-     * Update the specified comment reply in storage.
+     * Memperbarui balasan komentar tertentu dalam penyimpanan.
      */
     public function update(Request $request, Comment $comment, CommentReply $reply)
     {
-        // Check if user is authorized to update
+        if (Auth::user()->is_banned) {
+            return redirect()->route('articles.index')
+                ->with('error', 'Akun Kamu telah diblokir. Kamu tidak dapat mengedit artikel.');
+        }
+
         if (Auth::id() != $reply->user_id && !Auth::user()->isAdmin()) {
             abort(403);
         }
 
-        // Validate request
+        // Validasi permintaan
         $request->validate([
-            'konten' => 'required|string',
+            'isi_balasan' => 'required|string',
         ]);
 
-        // Update reply
-        $reply->isi_balasan = $request->konten;
+        // Memperbarui balasan
+        $reply->isi_balasan = $request->isi_balasan;
         $reply->save();
+        $article = Article::findOrFail($comment->article_id);
 
-        return redirect()->route('articles.show', $comment->article_id)
-            ->with('success', 'Reply updated successfully')
-            ->fragment('comment-' . $comment->comment_id);
+        return redirect()->route('articles.show', $article->slug)
+            ->with('success', 'Balasan berhasil diperbarui')
+            ->withFragment('comment-' . $comment->comment_id);
     }
 
     /**
-     * Remove the specified comment reply from storage.
+     * Menghapus balasan komentar tertentu dari penyimpanan.
      */
     public function destroy(Comment $comment, CommentReply $reply)
     {
-        // Check if user is authorized to delete
+        // Memeriksa apakah pengguna berwenang untuk menghapus
         if (Auth::id() != $reply->user_id && !Auth::user()->isAdmin()) {
             abort(403);
         }
 
         $reply->delete();
+        $article = Article::findOrFail($comment->article_id);
 
-        return redirect()->route('articles.show', $comment->article_id)
-            ->with('success', 'Reply deleted successfully')
-            ->fragment('comment-' . $comment->comment_id);
+        return redirect()->route('articles.show', $article->slug)
+            ->with('success', 'Balasan berhasil dihapus')
+            ->withFragment('comment-' . $comment->comment_id);
     }
 }

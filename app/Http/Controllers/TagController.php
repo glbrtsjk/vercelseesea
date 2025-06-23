@@ -16,19 +16,53 @@ class TagController extends Controller
     }
 
     /**
-     * Display a listing of all tags.
+     * Menampilkan daftar semua tag.
      */
-    public function index()
+     public function index(Request $request)
     {
-        $tags = Tag::withCount('articles')
-            ->orderBy('nama_tag')
-            ->paginate(32);
+        $query = Tag::query()->withCount('articles');
+        $isAdmin = Auth::check() && Auth::user()->isAdmin();
 
-        return view('tag.index', compact('tags'));
+        // Menangani filter dan pencarian khusus admin
+        if ($isAdmin) {
+            // Menangani pencarian
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where('nama_tag', 'LIKE', "%{$search}%")
+                     ->orWhere('deskripsi', 'LIKE', "%{$search}%");
+            }
+
+            // Menangani pengurutan
+            $sort = $request->sort ?? 'name';
+
+            switch ($sort) {
+                case 'name_desc':
+                    $query->orderBy('nama_tag', 'desc');
+                    break;
+                case 'articles':
+                    $query->orderBy('articles_count', 'desc');
+                    break;
+                case 'created':
+                    $query->orderBy('created_at', 'desc');
+                    break;
+                default:
+                    $query->orderBy('nama_tag', 'asc');
+            }
+        } else {
+            // Pengurutan default untuk pengguna biasa
+            $query->orderBy('nama_tag');
+        }
+
+        // Menggunakan ukuran paginasi berbeda tergantung jenis pengguna
+        $perPage = $isAdmin ? 20 : 32;
+        $tags = $query->paginate($perPage);
+
+        return view('tag.index', compact('tags', 'isAdmin'));
     }
 
+
     /**
-     * Display the specified tag and its articles.
+     * Menampilkan tag tertentu dan artikelnya.
      */
     public function show(Tag $tag)
     {
@@ -46,7 +80,7 @@ class TagController extends Controller
     }
 
     /**
-     * Search for tags by name
+     * Mencari tag berdasarkan nama
      */
     public function search(Request $request)
     {
@@ -74,7 +108,7 @@ public function getPopular(Request $request)
 }
 
     /**
-     * Display a tag cloud visualization
+     * Menampilkan visualisasi awan tag
      */
     public function cloud()
     {
@@ -88,25 +122,25 @@ public function getPopular(Request $request)
     }
 
     /**
-     * Follow a tag by the current user
+     * Mengikuti tag oleh pengguna saat ini
      */
     public function follow(Tag $tag)
     {
         Auth::user()->tags()->attach($tag->tag_id);
-        return redirect()->back()->with('success', "You are now following tag: {$tag->nama_tag}");
+        return redirect()->back()->with('success', "Anda sekarang mengikuti tag: {$tag->nama_tag}");
     }
 
     /**
-     * Unfollow a tag by the current user
+     * Berhenti mengikuti tag oleh pengguna saat ini
      */
     public function unfollow(Tag $tag)
     {
         Auth::user()->tags()->detach($tag->tag_id);
-        return redirect()->back()->with('success', "You have unfollowed tag: {$tag->nama_tag}");
+        return redirect()->back()->with('success', "Anda telah berhenti mengikuti tag: {$tag->nama_tag}");
     }
 
     /**
-     * Suggest tags based on article content for auto-tagging
+     * Menyarankan tag berdasarkan konten artikel untuk penandaan otomatis
      */
     public function suggestTags(Request $request)
     {
@@ -117,27 +151,27 @@ public function getPopular(Request $request)
             return redirect()->back();
         }
 
-        // Get all existing tags
+        // Mendapatkan semua tag yang ada
         $allTags = Tag::all()->pluck('nama_tag')->toArray();
 
-        // Combine title and content
+        // Menggabungkan judul dan konten
         $text = $title . ' ' . $content;
 
-        // Simple approach: check if tag names appear in the text
+        // Pendekatan sederhana: memeriksa apakah nama tag muncul dalam teks
         $suggestions = [];
         foreach ($allTags as $tag) {
-            // Skip very short tags to prevent false positives
+            // Lewati tag yang sangat pendek untuk mencegah hasil positif palsu
             if (strlen($tag) < 3) {
                 continue;
             }
 
-            // Case-insensitive search
+            // Pencarian tidak peka huruf besar/kecil
             if (stripos($text, $tag) !== false) {
                 $suggestions[] = $tag;
             }
         }
 
-        // Limit to 10 suggestions
+        // Batasi hingga 10 saran
         $suggestions = array_slice($suggestions, 0, 10);
 
         return view('tag.suggesttag', compact('suggestions', 'title', 'content'));

@@ -15,40 +15,43 @@ class Community extends Model
         'nama_komunitas',
         'slug',
         'deskripsi',
-        'gambar'
+        'gambar',
+        'created_by',
+        'is_active'
     ];
 
     public function users()
     {
         return $this->belongsToMany(User::class, 'community_user_pivots', 'community_id', 'user_id')
                 ->withPivot('tg_gabung', 'role')
-                ->withTimestamps();
+                ->withTimestamps()
+                ->using(CommunityMember::class);
     }
+
+     public function initiatives()
+   {
+    return $this->hasMany(CommunityInitiative::class, 'community_id', 'community_id')
+        ->orderBy('urutan_prioritas', 'asc');
+   }
 
     public function messages()
     {
         return $this->hasMany(Message::class, 'community_id', 'community_id');
     }
 
-    /**
-     * Get the lock record for this community if it exists
-     */
+
     public function lock()
     {
         return $this->hasOne(CommunityLock::class, 'community_id', 'community_id');
     }
 
-    /**
-     * Check if community chat is locked
-     */
+
     public function isLocked()
     {
         return $this->lock()->exists();
     }
 
-    /**
-     * Get banned users for this community
-     */
+    
     public function bannedUsers()
     {
         return $this->hasMany(BannedUser::class, 'community_id', 'community_id');
@@ -70,4 +73,9 @@ class Community extends Model
     {
         return 'slug';
     }
+
+    public function events()
+{
+    return $this->hasMany(CommunityEvent::class, 'community_id', 'community_id');
+}
 }

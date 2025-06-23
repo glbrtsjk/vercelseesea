@@ -6,6 +6,7 @@ use App\Models\Community;
 use App\Models\Message;
 use App\Models\CommunityMember;
 use App\Models\CommunityLock;
+use App\Models\CommunityEvent;
 use App\Models\MuteUsers;
 use App\Models\BanUsers;
 use App\Services\FileUploadService;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 
+
 class CommunityController extends Controller
 {
     protected $fileUploadService;
@@ -22,110 +24,184 @@ class CommunityController extends Controller
     public function __construct(FileUploadService $fileUploadService)
     {
         $this->middleware('auth')->except(['index', 'show']);
+        $this->middleware('checkban')->except(['index','show', 'store', 'join', 'showJoinForm']);
         $this->fileUploadService = $fileUploadService;
     }
 
-    /**
-     * Display a listing of communities.
-     */
-    public function index(Request $request)
-    {
-        $query = Community::withCount('users');
 
-        // Handle search
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('nama_komunitas', 'like', "%{$search}%")
-                  ->orWhere('deskripsi', 'like', "%{$search}%");
-            });
-        }
+public function index(Request $request)
+{
+    $query = Community::withCount('users');
 
-        $communities = $query->orderBy('users_count', 'desc')
-            ->paginate(12)
-            ->withQueryString();
-
-        return view('community.index', compact('communities'));
+    if ($request->has('search') && !empty($request->search)) {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('nama_komunitas', 'like', "%{$search}%")
+              ->orWhere('deskripsi', 'like', "%{$search}%");
+        });
     }
 
-    /**
-     * Display the specified community.
-     */
-    public function show(Community $community)
-    {
-        $community->load('users', 'messages');
 
-        // Check if user is a member of this community
-        $isMember = false;
-        $isModerator = false;
-        $isModeratorOrAdmin = false;
-        $memberRecord = null;
+    $sortBy = $request->get('sort', 'users_count');
+    $sortOrder = $request->get('order', 'desc');
 
-        if (Auth::check()) {
-            // Define memberRecord before using it
-            $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
-            $isMember = $memberRecord ? true : false;
-
-            // Check if user is banned from this community
-            $isBanned = BanUsers::where('community_id', $community->community_id)
-                ->where('user_id', Auth::id())
-                ->exists();
-
-            if ($isBanned) {
-                return redirect()->route('communities.index')
-                    ->with('error', __('You have been banned from this community.'));
-            }
-
-            if ($memberRecord && isset($memberRecord->pivot->role)) {
-                $isModerator = in_array($memberRecord->pivot->role, ['moderator', 'admin']);
-                // Check if user is either a community moderator or a system admin
-                $isModeratorOrAdmin = $isModerator || Auth::user()->role === 'admin';
-            } elseif (Auth::check() && Auth::user()->role === 'admin') {
-                // System admin who is not a community member yet
-                $isModeratorOrAdmin = true;
-            }
-        }
-
-        // Check if chat is locked
-        $isChatLocked = CommunityLock::where('community_id', $community->community_id)->exists();
-        $messages = $community->messages()
-            ->with('user')
-            ->latest()
-            ->paginate(10);
-
-        return view('community.show', compact(
-            'community',
-            'isMember',
-            'isModerator',
-            'isModeratorOrAdmin',
-            'isChatLocked',
-            'messages'
-        ));
+    switch ($sortBy) {
+        case 'name':
+            $query->orderBy('nama_komunitas', $sortOrder);
+            break;
+        case 'created':
+            $query->orderBy('created_at', $sortOrder);
+            break;
+        case 'activity':
+            $query->withCount('messages')
+                  ->orderBy('messages_count', $sortOrder);
+            break;
+        default:
+            $query->orderBy('users_count', $sortOrder);
     }
 
-    /**
-     * Create a new community
-     */
+    $perPage = $request->get('per_page', 12);
+    $perPage = in_array($perPage, [6, 12, 24, 48]) ? $perPage : 12;
+
+    $communities = $query->paginate($perPage)
+        ->withQueryString();
+
+    $trendingCommunities = Community::withCount(['messages' => function($query) {
+            $query->where('tgl_pesan', '>=', now()->subDays(30));
+        }])
+        ->having('messages_count', '>', 0)
+        ->orderBy('messages_count', 'desc')
+        ->take(3)
+        ->get();
+
+    $newestCommunities = Community::withCount('users')
+        ->orderBy('created_at', 'desc')
+        ->take(3)
+        ->get();
+
+     $initiatives = \App\Models\CommunityInitiative::with('community')
+    ->inRandomOrder()
+    ->take(4)
+    ->get();
+
+
+$stats = [
+    'total_communities' => Community::count(),
+    'total_members' => \DB::table('community_user_pivots')->count(),
+    'active_today' => Community::whereHas('messages', function($query) {
+        $query->whereDate('tgl_pesan', today());
+    })->count(),
+    'new_this_month' => Community::whereMonth('created_at', now()->month)
+        ->whereYear('created_at', now()->year)
+        ->count(),
+    'total_moderators' => \DB::table('community_user_pivots')
+        ->where('role', 'moderator')
+        ->count(),
+    'total_admins' => \DB::table('community_user_pivots')
+        ->where('role', 'admin')
+        ->count(),
+    'regular_members' => \DB::table('community_user_pivots')
+        ->where('role', 'member')
+        ->count()
+];
+
+    return view('community.index1', compact(
+        'communities',
+        'trendingCommunities',
+        'newestCommunities',
+        'stats',
+        'initiatives'
+    ));
+}
+
+
+public function show(Community $community)
+{
+    $community->load(['users', 'messages', 'initiatives']);
+
+
+
+    $isMember = false;
+    $isModerator = false;
+    $isModeratorOrAdmin = false;
+    $memberRecord = null;
+
+    if (Auth::check()) {
+        $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
+        $isMember = $memberRecord ? true : false;
+
+        $isBanned = BanUsers::where('community_id', $community->community_id)
+            ->where('user_id', Auth::id())
+            ->exists();
+
+        if ($isBanned) {
+            return redirect()->route('communities.index')
+                ->with('error', __('You have been banned from this community.'));
+        }
+
+        if ($memberRecord && isset($memberRecord->pivot->role)) {
+            $isModerator = in_array($memberRecord->pivot->role, ['moderator', 'admin']);
+            $isModerator = in_array($memberRecord->pivot->role, ['moderator', 'admin']);
+            $isModeratorOrAdmin = $isModerator || Auth::user()->role === 'admin';
+        } elseif (Auth::check() && Auth::user()->role === 'admin') {
+            $isModeratorOrAdmin = true;
+        }
+
+        if ($isMember) {
+            $community->users()->updateExistingPivot(Auth::id(), [
+                'aktif_flag' => 1,
+                'terakhir_aktif' => now()
+            ]);
+        }
+    }
+
+    $isChatLocked = CommunityLock::where('community_id', $community->community_id)->exists();
+    $messages = $community->messages()
+        ->with('user')
+        ->latest()
+        ->paginate(10);
+
+    $events = $community->events()
+        ->where('event_date', '>=', now()->toDateString())
+        ->orderBy('event_date')
+        ->take(3)
+        ->get();
+
+
+         $latestMessages = Message::where('community_id', $community->community_id)
+        ->with('user')
+        ->latest('tgl_pesan')
+        ->take(3)
+        ->get();
+
+    return view('community.show3', compact(
+        'community',
+        'isMember',
+        'isModerator',
+        'isModeratorOrAdmin',
+        'isChatLocked',
+        'messages',
+        'events',
+        'latestMessages'
+    ));
+}
+
     public function store(Request $request)
     {
-        // Validate request data
         $request->validate([
             'nama_komunitas' => 'required|string|max:255|unique:communities,nama_komunitas',
             'deskripsi' => 'required|string',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Process image if uploaded
         $imagePath = null;
         if ($request->hasFile('gambar')) {
             $imagePath = $this->fileUploadService->uploadFile($request->file('gambar'), 'communities');
         }
 
-        // Create slug from name
         $slug = Str::slug($request->nama_komunitas);
         $uniqueSlug = $this->createUniqueSlug($slug);
 
-        // Create community
         $community = Community::create([
             'nama_komunitas' => $request->nama_komunitas,
             'slug' => $uniqueSlug,
@@ -134,19 +210,15 @@ class CommunityController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        // Auto-join the creator to the community as a moderator
         $community->users()->attach(Auth::id(), [
             'tg_gabung' => now(),
-            'role' => 'moderator'  // Set the creator as a moderator
+            'role' => 'moderator'
         ]);
 
         return redirect()->route('communities.show', $community)
             ->with('success', __('messages.community_created'));
     }
 
-    /**
-     * Generate a unique slug for the community
-     */
     protected function createUniqueSlug($slug)
     {
         $original = $slug;
@@ -160,12 +232,9 @@ class CommunityController extends Controller
         return $slug;
     }
 
-    /**
-     * Show form to join a community
-     */
+
     public function showJoinForm(Community $community)
     {
-        // Check if user is banned from this community
         if (Auth::check()) {
             $isBanned = BanUsers::where('community_id', $community->community_id)
                 ->where('user_id', Auth::id())
@@ -175,8 +244,8 @@ class CommunityController extends Controller
                 return redirect()->route('communities.index')
                     ->with('error', __('You have been banned from this community.'));
             }
+                $community->load(['initiatives', 'users']);
 
-            // Check if already a member
             $isMember = $community->users()->where('users.user_id', Auth::id())->exists();
             if ($isMember) {
                 return redirect()->route('communities.show', $community)
@@ -187,12 +256,8 @@ class CommunityController extends Controller
         return view('community.join', compact('community'));
     }
 
-    /**
-     * Join a community
-     */
     public function join(Request $request, Community $community)
     {
-        // Check if user is banned
         $isBanned = BanUsers::where('community_id', $community->community_id)
             ->where('user_id', Auth::id())
             ->exists();
@@ -202,7 +267,6 @@ class CommunityController extends Controller
                 ->with('error', __('You have been banned from this community.'));
         }
 
-        // Check if already a member
         $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
 
         if ($memberRecord) {
@@ -216,72 +280,79 @@ class CommunityController extends Controller
 
         // Join the community
         $community->users()->attach(Auth::id(), [
-            'tg_gabung' => now(),
-            'role' => 'member'  // Set default role
+        'tg_gabung' => now(),
+        'role' => 'member',
+        'aktif_flag' => 1,
+        'terakhir_aktif' => now()
         ]);
+
 
         return redirect()->route('communities.show', $community)
             ->with('success', __('You have successfully joined this community.'));
     }
 
-    /**
-     * Display the chat for a community
- * Display the chat for a community
- */
-public function chat(Community $community)
+
+
+public function chat(Request $request, Community $community)
 {
-    // Check if user is logged in
     if (!Auth::check()) {
         return redirect()->route('login')
-            ->with('error', __('You need to log in to access the chat.'));
+            ->with('error', __('kamu harus login untuk mengakses chat komunitas.'));
     }
-
-    // Check if user is banned from this community
     $isBanned = BanUsers::where('community_id', $community->community_id)
         ->where('user_id', Auth::id())
         ->exists();
 
     if ($isBanned) {
         return redirect()->route('communities.index')
-            ->with('error', __('You have been banned from this community.'));
+            ->with('error', __('kamu telah diban dari komunitas ini.'));
     }
 
     $isSystemAdmin = Auth::user()->role === 'admin';
 
-    // Check if user is a member or system admin
     $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
     $isMember = $memberRecord ? true : false;
 
     if (!$isMember && !$isSystemAdmin) {
         return redirect()->route('communities.show', $community)
-            ->with('error', __('You must be a member to access the chat.'));
+            ->with('error', __('kamu harus member untuk mengakses chat.'));
     }
 
-    // Get user role in this community
+    if ($isMember) {
+        $community->users()->updateExistingPivot(Auth::id(), [
+            'aktif_flag' => 1,
+            'terakhir_aktif' => now()
+        ]);
+    }
+
+    if ($request->ajax()) {
+        $members = $community->users()
+            ->withPivot('role', 'aktif_flag', 'terakhir_aktif')
+            ->orderByPivot('role', 'desc')
+            ->get();
+
+        return view('community.chat._members_list', compact('members', 'community'));
+    }
+
     $userRole = $memberRecord?->pivot?->role ?? 'member';
 
-    // Determine if user has moderation privileges
     $canModerate = in_array($userRole, ['admin', 'moderator']) || $isSystemAdmin;
 
-    // Check if user is currently muted
     $isMuted = MuteUsers::where('community_id', $community->community_id)
         ->where('user_id', Auth::id())
         ->where('unmute_at', '>', now())
         ->exists();
 
-    // Get community messages with their authors
     $messages = Message::where('community_id', $community->community_id)
         ->with('user')
         ->orderBy('tgl_pesan', 'asc')
         ->get();
 
-    // Get community members with their roles
     $members = $community->users()
-        ->withPivot('role')
-        ->orderByPivot('role', 'asc')
+        ->withPivot('role', 'aktif_flag', 'terakhir_aktif')
+        ->orderByPivot('role', 'desc')
         ->get();
 
-    // Check if chat is locked and get lock information
     $isChatLocked = CommunityLock::where('community_id', $community->community_id)->exists();
     $lockInfo = null;
 
@@ -291,10 +362,39 @@ public function chat(Community $community)
             ->first();
     }
 
-    // Get slow mode setting (default to 0 - disabled)
-    $isSlowMode = 0; // You should replace this with actual lookup of slow mode settings
+    $messageUserRoles = [];
+    $mutedUsers = [];
+    $bannedUsers = [];
+    $currentUserRole = $memberRecord?->pivot?->role ?? 'member';
+    $canMuteUser = true;
+    $canBanUser = true;
 
-    // Return the view with all required data, regardless of user role
+    foreach ($messages as $message) {
+        $messageUser = $members->where('user_id', $message->user_id)->first();
+
+        $messageUserRoles[$message->id] = $messageUser && isset($messageUser->pivot) && isset($messageUser->pivot->role)
+            ? $messageUser->pivot->role
+            : 'member';
+
+        $mutedUsers[$message->id] = MuteUsers::where('community_id', $community->community_id)
+            ->where('user_id', $message->user_id)
+            ->where('unmute_at', '>', now())
+            ->exists();
+
+        $bannedUsers[$message->id] = BanUsers::where('community_id', $community->community_id)
+            ->where('user_id', $message->user_id)
+            ->exists();
+    }
+
+    $rolePriority = [
+        'admin' => 3,
+        'moderator' => 2,
+        'member' => 1
+    ];
+
+    // Set some flags based on user role
+    $hasModPermissions = $isSystemAdmin || in_array($currentUserRole, ['admin', 'moderator']);
+
     return view('community.chat.index', compact(
         'community',
         'messages',
@@ -305,22 +405,171 @@ public function chat(Community $community)
         'lockInfo',
         'isSystemAdmin',
         'isMuted',
-        'isSlowMode'
+        'messageUserRoles',
+        'currentUserRole',
+        'rolePriority',
+        'mutedUsers',
+        'bannedUsers',
+        'canMuteUser',
+        'canBanUser',
+        'hasModPermissions'
     ));
 }
 
-/**
- * Store a new message in the chat
- */
-public function storeMessage(Request $request, Community $community)
+
+public function members(Request $request, Community $community)
 {
-    // Validate the request
-    $request->validate([
-        'konten' => 'required|string|max:1000',
-        'attachment' => 'nullable|file|max:10240', // 10MB max
+    if (!Auth::check()) {
+        return redirect()->route('login')
+            ->with('error', __('Anda harus login untuk melihat daftar anggota.'));
+    }
+
+    $isBanned = BanUsers::where('community_id', $community->community_id)
+        ->where('user_id', Auth::id())
+        ->exists();
+
+    if ($isBanned) {
+        return redirect()->route('communities.index')
+            ->with('error', __('Anda telah diblokir dari komunitas ini.'));
+    }
+  $isSystemAdmin = Auth::user()->role === 'admin';
+
+$communityAdmins = $community->users()->where('community_user_pivots.role', 'admin')->count();
+    $systemAdmins = $community->users()
+        ->where('users.role', 'admin')
+        ->where(function($q) {
+            $q->where('community_user_pivots.role', '!=', 'admin')
+              ->orWhereNull('community_user_pivots.role');
+        })
+        ->count();
+
+    $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
+    $isMember = $memberRecord ? true : false;
+    $isModeratorOrAdmin = $isSystemAdmin || ($memberRecord && in_array($memberRecord->pivot->role, ['moderator', 'admin']));
+
+    if (!$isMember && !$isSystemAdmin) {
+        return redirect()->route('communities.show', $community)
+            ->with('error', __('Anda harus menjadi anggota untuk melihat daftar anggota.'));
+    }
+
+    $membersQuery = $community->users()
+        ->withPivot('role', 'tg_gabung', 'aktif_flag', 'terakhir_aktif')
+        ->when($request->has('search') && $request->search, function($query) use ($request) {
+            $query->where('nama', 'like', '%' . $request->search . '%');
+        })
+      ->when($request->has('role') && $request->role, function($query) use ($request) {
+            if ($request->role === 'admin') {
+                // Include both system admins and community admins
+                $query->where(function($q) {
+                    $q->where('community_user_pivots.role', 'admin')
+                      ->orWhere('users.role', 'admin');
+                });
+            } else {
+                $query->where('community_user_pivots.role', $request->role);
+            }
+        });
+
+
+    switch ($request->get('sort', 'newest')) {
+        case 'oldest':
+            $membersQuery->orderBy('community_user_pivots.tg_gabung', 'asc');
+            break;
+        case 'name_asc':
+            $membersQuery->orderBy('nama', 'asc');
+            break;
+        case 'name_desc':
+            $membersQuery->orderBy('nama', 'desc');
+            break;
+        case 'newest':
+        default:
+            $membersQuery->orderBy('community_user_pivots.tg_gabung', 'desc');
+            break;
+    }
+
+    $members = $membersQuery->paginate(24)->withQueryString();
+
+    $onlineMembers = $community->users()
+        ->withPivot('role', 'aktif_flag', 'terakhir_aktif')
+        ->where('community_user_pivots.aktif_flag', 1)
+        ->whereNotNull('community_user_pivots.terakhir_aktif')
+        ->where('community_user_pivots.terakhir_aktif', '>', now()->subMinutes(15))
+        ->get();
+
+       $communityAdmins = $community->users()->where('community_user_pivots.role', 'admin')->count();
+    $systemAdmin = $community->users()->where('users.role', 'admin')
+        ->where(function($q) {
+            // Only count system admins that aren't already community admins
+            $q->where('community_user_pivots.role', '!=', 'admin')
+              ->orWhereNull('community_user_pivots.role');
+        })
+        ->count();
+
+    $admins = $communityAdmins + $systemAdmin;
+    $moderators = $community->users()->wherePivot('role', 'moderator')->count();
+    $regularMembers = $community->users()
+        ->where('community_user_pivots.role', 'member')
+        ->where('users.role', '!=', 'admin')
+        ->count();
+
+    if ($isMember) {
+        $community->users()->updateExistingPivot(Auth::id(), [
+            'aktif_flag' => 1,
+            'terakhir_aktif' => now()
+        ]);
+    }
+
+     $hasSearch = $request->has('search') && !empty($request->search);
+    $searchQuery = $request->search;
+
+    return view('community.anggota', compact(
+        'community',
+        'members',
+        'onlineMembers',
+        'admins',
+        'moderators',
+        'regularMembers',
+        'isModeratorOrAdmin',
+        'hasSearch',
+        'searchQuery'
+    ));
+}
+
+Public function updateActivity(Request $request, Community $community)
+{
+    if (!Auth::check()) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
+    $user = Auth::user();
+
+    $community->users()->updateExistingPivot($user->id, [
+        'aktif_flag' => 1,
+        'terakhir_aktif' => now()
     ]);
 
-    // Check if user is banned
+    $updatedMember = $community->users()
+        ->where('users.user_id', $user->id)
+        ->first();
+
+    return response()->json([
+        'status' => 'success',
+        'user_id' => $user->id,
+        'aktif_flag' => $updatedMember->pivot->aktif_flag,
+        'terakhir_aktif' => $updatedMember->pivot->terakhir_aktif,
+        'is_online' => ($updatedMember->pivot->aktif_flag == 1 &&
+                       $updatedMember->pivot->terakhir_aktif > now()->subMinutes(15))
+    ]);
+}
+
+
+public function storeMessage(Request $request, Community $community)
+{
+
+    $request->validate([
+        'konten' => 'required|string|max:1000',
+        'lampiran' => 'nullable|file|max:10240',
+    ]);
+
     $isBanned = BanUsers::where('community_id', $community->community_id)
         ->where('user_id', Auth::id())
         ->exists();
@@ -330,7 +579,6 @@ public function storeMessage(Request $request, Community $community)
             ->with('error', __('You have been banned from this community.'));
     }
 
-    // Check if user is muted
     $isMuted = MuteUsers::where('community_id', $community->community_id)
         ->where('user_id', Auth::id())
         ->where('unmute_at', '>', now())
@@ -342,18 +590,15 @@ public function storeMessage(Request $request, Community $community)
             ->with('error', __('You are muted for :minutes more minutes.', ['minutes' => $timeRemaining]));
     }
 
-    // Check if user is a member or admin
     $isMember = $community->users()->where('users.user_id', Auth::id())->exists();
     if (!$isMember && Auth::user()->role !== 'admin') {
         return redirect()->route('communities.show', $community)
             ->with('error', __('You must be a member to post in this chat.'));
     }
 
-    // Check if the chat is locked
     $isChatLocked = CommunityLock::where('community_id', $community->community_id)->exists();
 
     if ($isChatLocked) {
-        // Check if user has permissions to post in locked chat (moderators and admins only)
         $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
         $userRole = $memberRecord?->pivot?->role ?? 'member';
         $canModerate = in_array($userRole, ['admin', 'moderator']) || Auth::user()->role === 'admin';
@@ -364,57 +609,54 @@ public function storeMessage(Request $request, Community $community)
         }
     }
 
-    // Initialize attachment fields
-    $attachmentPath = null;
-    $attachmentName = null;
-    $attachmentType = null;
+    $lampiranPath = null;
+    $lampiranNama = null;
+    $lampiranTipe = null;
 
-    // Handle file upload if present
-    if ($request->hasFile('attachment')) {
-        $file = $request->file('attachment');
+    if ($request->hasFile('lampiran')) {
+        $file = $request->file('lampiran');
 
         if ($file->isValid()) {
             $fileName = time() . '_' . $file->getClientOriginalName();
-            $attachmentPath = $file->storeAs('attachments/messages', $fileName, 'public');
-            $attachmentName = $file->getClientOriginalName();
+            $lampiranPath = $file->storeAs('lampiran/messages', $fileName, 'public');
+            $lampiranNama = $file->getClientOriginalName();
 
-            // Determine attachment type
             if (str_starts_with($file->getMimeType(), 'image/')) {
-                $attachmentType = 'image';
+                $lampiranTipe = 'image';
             } else {
-                $attachmentType = 'file';
+                $lampiranTipe = 'file';
             }
         }
     }
 
-    // Store the message
     $message = new Message();
-    $message->konten = $request->konten;
+    $message->isi_pesan= $request->konten;
     $message->user_id = Auth::id();
     $message->community_id = $community->community_id;
     $message->tgl_pesan = now();
 
-    if ($attachmentPath) {
-        $message->attachment = $attachmentPath;
-        $message->attachment_name = $attachmentName;
-        $message->attachment_type = $attachmentType;
+    if ($lampiranPath) {
+        $message->lampiran = $lampiranPath;
+        $message->lampiran_nama = $lampiranNama;
+        $message->lampiran_tipe = $lampiranTipe;
     }
 
     $message->save();
 
+   $community->users()->updateExistingPivot(Auth::id(), [
+        'aktif_flag' => 1,
+        'terakhir_aktif' => now()
+    ]);
+
     return redirect()->route('communities.chat', $community);
 }
 
-    /**
-     * Delete a message from the chat
-     */
+
     public function deleteMessage(Community $community, Message $message)
     {
-        // Check if user owns the message or has moderation privileges
         $isOwner = $message->user_id === Auth::id();
 
         if (!$isOwner) {
-            // Check if user has moderation rights
             $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
             $userRole = $memberRecord?->pivot?->role ?? 'member';
             $canModerate = in_array($userRole, ['admin', 'moderator']) || Auth::user()->role === 'admin';
@@ -425,19 +667,16 @@ public function storeMessage(Request $request, Community $community)
             }
         }
 
-        // Delete the message
         $message->delete();
 
         return redirect()->route('communities.chat', $community)
             ->with('success', __('Message deleted successfully.'));
     }
 
-    /**
-     * Lock or unlock the chat
-     */
+
     public function lockChat(Request $request, Community $community)
     {
-        // Check if user has moderation privileges
+
         $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
         $userRole = $memberRecord?->pivot?->role ?? 'member';
         $canModerate = in_array($userRole, ['admin', 'moderator']) || Auth::user()->role === 'admin';
@@ -447,16 +686,16 @@ public function storeMessage(Request $request, Community $community)
                 ->with('error', __('You do not have permission to perform this action.'));
         }
 
-        // Check if chat is already locked
+
         $isLocked = CommunityLock::where('community_id', $community->community_id)->exists();
 
         if ($isLocked) {
-            // Unlock the chat
+
             CommunityLock::where('community_id', $community->community_id)->delete();
             return redirect()->route('communities.chat', $community)
-                ->with('success', __('Chat has been unlocked successfully.'));
+                ->with('success', __('Chat Sudah Dikunci.'));
         } else {
-            // Lock the chat
+
             CommunityLock::create([
                 'community_id' => $community->community_id,
                 'locked_by' => Auth::id(),
@@ -465,29 +704,48 @@ public function storeMessage(Request $request, Community $community)
             ]);
 
             return redirect()->route('communities.chat', $community)
-                ->with('success', __('Chat has been locked successfully.'));
+                ->with('success', __('Chat sudah diKunci.'));
         }
     }
 
-    /**
-     * Ban a user from a community
-     */
+
     public function BanUsers(Request $request, Community $community, User $user)
     {
-        // Check if the current user has permission to ban
         if (!BanUsers::canBan(Auth::user(), $community) && Auth::user()->role !== 'admin') {
             return redirect()->route('communities.chat', $community)
                 ->with('error', __('You do not have permission to ban users.'));
         }
 
-        // Check if the target user is a moderator/admin (cannot ban them)
+        $existingBan = BanUsers::where('community_id', $community->community_id)
+        ->where('user_id', $user->user_id)
+        ->first();
+
+
         $targetMember = $community->users()->where('users.user_id', $user->user_id)->first();
         if ($targetMember && in_array($targetMember->pivot->role, ['moderator', 'admin'])) {
             return redirect()->route('communities.chat', $community)
                 ->with('error', __('You cannot ban a moderator or admin.'));
         }
 
-        // Ban the user
+        if ($existingBan) {
+        return redirect()->back()->with('info', 'Pengguna sudah dalam keadaan diblokir sejak ' .
+            $existingBan->banned_at->format('H:i, d M Y'));
+
+    }
+
+     $currentMember = $community->users()
+        ->where('users.user_id', Auth::id())
+        ->first();
+
+     $isSystemAdmin = Auth::user()->role === 'admin';
+    $isCommAdmin = $currentMember && $currentMember->pivot->role === 'admin';
+    $isModerator = $currentMember && ($currentMember->pivot->role === 'moderator' || $currentMember->pivot->role === 'admin');
+
+      if (!$isModerator && !$isSystemAdmin) {
+        return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk memblokir pengguna.');
+    }
+
+
         BanUsers::create([
             'community_id' => $community->community_id,
             'user_id' => $user->user_id,
@@ -496,93 +754,172 @@ public function storeMessage(Request $request, Community $community)
             'reason' => $request->input('reason')
         ]);
 
-        // If the user was a member, remove them from the community
         $community->users()->detach($user->user_id);
 
         return redirect()->route('communities.chat', $community)
-            ->with('success', __('User has been banned successfully.'));
+            ->with('success', __('user telah diban.'));
     }
 
-    /**
-     * Unban a user from a community
-     */
-    public function unBanUsers(Community $community, User $user)
-    {
-        // Check if the current user has permission to unban
-        if (!BanUsers::canBan(Auth::user(), $community) && Auth::user()->role !== 'admin') {
-            return redirect()->route('communities.chat', $community)
-                ->with('error', __('You do not have permission to unban users.'));
-        }
 
-        // Remove the ban
-        BanUsers::where('community_id', $community->community_id)
-            ->where('user_id', $user->user_id)
-            ->delete();
 
+public function unban(Community $community, $userId)
+{
+    // Find the user
+    $user = User::find($userId);
+    if (!$user) {
+        return redirect()->back()->with('error', 'Pengguna tidak ditemukan.');
+    }
+
+    // Check if the current user has permission to unban
+    $currentMember = $community->users()->where('users.user_id', Auth::id())->first();
+    $isSystemAdmin = Auth::user()->role === 'admin';
+    $isCommAdmin = $currentMember && $currentMember->pivot->role === 'admin';
+    $isModerator = $currentMember && ($currentMember->pivot->role === 'moderator' || $currentMember->pivot->role === 'admin');
+
+    if (!$isModerator && !$isSystemAdmin) {
+        return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk membatalkan blokir pengguna.');
+    }
+
+    // Remove the ban
+    $ban = BanUsers::where('community_id', $community->community_id)
+        ->where('user_id', $userId)
+        ->first();
+
+    if ($ban) {
+        $ban->delete();
+        return redirect()->back()->with('success', 'Pengguna berhasil dibatalkan blokirnya.');
+    } else {
+        return redirect()->back()->with('info', 'Pengguna tidak sedang diblokir.');
+    }
+}
+
+public function unBanUsers(Community $community, User $user = null, Request $request)
+{
+    if (!$user && $request && $request->has('user_id')) {
+        $userId = $request->user_id;
+        $user = User::find($userId);
+    }
+
+    if (!$user) {
         return redirect()->route('communities.chat', $community)
-            ->with('success', __('User has been unbanned successfully.'));
+            ->with('error', __('User not found.'));
     }
 
-    /**
-     * Mute a user in a community
-     */
+    $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
+    $userRole = $memberRecord?->pivot?->role ?? 'member';
+    $isAdmin = $userRole === 'admin' || Auth::user()->role === 'admin';
+
+    if (!$isAdmin) {
+        return redirect()->route('communities.chat', $community)
+            ->with('error', __('You do not have permission to unban users.'));
+    }
+
+    BanUsers::where('community_id', $community->community_id)
+        ->where('user_id', $user->user_id)
+        ->delete();
+
+    return redirect()->route('communities.chat', $community)
+        ->with('success', __('User has been unbanned successfully.'));
+}
+
     public function MuteUsers(Request $request, Community $community, User $user)
     {
-        // Check if the current user has permission to mute
-        if (!MuteUsers::canMute(Auth::user(), $community) && Auth::user()->role !== 'admin') {
-            return redirect()->route('communities.chat', $community)
-                ->with('error', __('You do not have permission to mute users.'));
-        }
 
-        // Check if the target user is a moderator/admin (cannot mute them)
-        $targetMember = $community->users()->where('users.user_id', $user->user_id)->first();
-        if ($targetMember && in_array($targetMember->pivot->role, ['moderator', 'admin'])) {
-            return redirect()->route('communities.chat', $community)
-                ->with('error', __('You cannot mute a moderator or admin.'));
-        }
+        if (!Auth::user()->can('mute_users', $community) && Auth::user()->role !== 'admin') {
+        return redirect()->route('communities.chat', $community)
+            ->with('error', 'Anda tidak memiliki izin untuk membisukan pengguna.');
+    }
 
-        // Get mute duration from request
-        $minutes = $request->input('duration', 30);
 
-        // Mute the user
-        MuteUsers::create([
-            'community_id' => $community->community_id,
-            'user_id' => $user->user_id,
-            'muted_by' => Auth::id(),
-            'muted_at' => now(),
-            'unmute_at' => now()->addMinutes($minutes)
-        ]);
+    $targetMember = $community->users()->where('users.user_id', $user->user_id)->first();
+    if ($targetMember && in_array($targetMember->pivot->role, ['moderator', 'admin'])) {
+        return redirect()->route('communities.chat', $community)
+            ->with('error', __('You cannot mute a moderator or admin.'));
+    }
+
+    $minutes = $request->input('duration', 30);
+
+    // Mute the user
+    MuteUsers::create([
+        'community_id' => $community->community_id,
+        'user_id' => $user->user_id,
+        'muted_by' => Auth::id(),
+        'muted_at' => now(),
+        'unmute_at' => now()->addMinutes($minutes),
+        'reason' => $request->input('reason')
+    ]);
 
         return redirect()->route('communities.chat', $community)
             ->with('success', __('User has been muted for :minutes minutes.', ['minutes' => $minutes]));
     }
 
-    /**
-     * Unmute a user in a community
-     */
-    public function unMuteUsers(Community $community, User $user)
-    {
-        // Check if the current user has permission to unmute
-        if (!MuteUsers::canMute(Auth::user(), $community) && Auth::user()->role !== 'admin') {
-            return redirect()->route('communities.chat', $community)
-                ->with('error', __('You do not have permission to unmute users.'));
-        }
 
-        // Remove the mute by updating unmute_at to now
-        MuteUsers::where('community_id', $community->community_id)
-            ->where('user_id', $user->user_id)
-            ->update(['unmute_at' => now()]);
-
-        return redirect()->route('communities.chat', $community)
-            ->with('success', __('User has been unmuted successfully.'));
+public function unMuteUsers(Community $community, User $user = null, Request $request = null)
+{
+    if (!$user && $request && $request->has('user_id')) {
+        $userId = $request->user_id;
+        $user = User::find($userId);
+    } else if (!$user && isset($userId)) {
+        $user = User::find($userId);
     }
 
-    /**
-     * Promote a user to moderator
-     */
-    public function promoteModerator(Community $community, User $user)
+    if (!$user) {
+        return redirect()->route('communities.chat', $community)
+            ->with('error', __('User not found.'));
+    }
+
+    $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
+    $userRole = $memberRecord?->pivot?->role ?? 'member';
+    $canModerate = in_array($userRole, ['admin', 'moderator']) || Auth::user()->role === 'admin';
+
+    if (!$canModerate) {
+        return redirect()->route('communities.chat', $community)
+            ->with('error', __('You do not have permission to unmute users.'));
+    }
+
+    MuteUsers::where('community_id', $community->community_id)
+        ->where('user_id', $user->user_id)
+        ->update(['unmute_at' => now()]);
+
+    return redirect()->route('communities.chat', $community)
+        ->with('success', __('User has been unmuted successfully.'));
+}
+
+public function unmute(Community $community, User $user)
+{
+    // Find the user
+    $userObj = User::find($user);
+    if (!$userObj) {
+        return redirect()->route('communities.chat', $community)
+            ->with('error', __('User tidak ditemukan.'));
+    }
+
+    $isSystemAdmin = Auth::user()->role === 'admin';
+    $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
+    $userRole = $memberRecord?->pivot?->role ?? 'member';
+    $canModerate = in_array($userRole, ['admin', 'moderator']) || $isSystemAdmin;
+
+    if (!$canModerate) {
+        return redirect()->route('communities.chat', $community)
+            ->with('error', __('You do not have permission to unmute users.'));
+    }
+
+    $mute = MuteUsers::where('community_id', $community->community_id)
+        ->where('user_id', $user)
+        ->first();
+
+    if ($mute) {
+        $mute->unmute_at = now();
+        $mute->save();
+        return redirect()->route('communities.chat', $community)
+            ->with('success', __('User has been unmuted successfully.'));
+    } else {
+        return redirect()->route('communities.chat', $community)
+            ->with('info', __('User is not currently muted.'));
+    }
+}
+   public function promoteModerator(Community $community, User $user)
     {
-        // Check if current user is admin of the community or system admin
         $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
         $isAdmin = ($memberRecord && $memberRecord->pivot->role === 'admin') || Auth::user()->role === 'admin';
 
@@ -591,7 +928,6 @@ public function storeMessage(Request $request, Community $community)
                 ->with('error', __('You do not have permission to promote users.'));
         }
 
-        // Update the user's role to moderator
         $community->users()->updateExistingPivot($user->user_id, [
             'role' => 'moderator'
         ]);
@@ -600,12 +936,8 @@ public function storeMessage(Request $request, Community $community)
             ->with('success', __('User has been promoted to moderator.'));
     }
 
-    /**
-     * Demote a user from moderator to regular member
-     */
-    public function demoteModerator(Community $community, User $user)
+       public function demoteModerator(Community $community, User $user)
     {
-        // Check if current user is admin of the community or system admin
         $memberRecord = $community->users()->where('users.user_id', Auth::id())->first();
         $isAdmin = ($memberRecord && $memberRecord->pivot->role === 'admin') || Auth::user()->role === 'admin';
 
@@ -614,7 +946,6 @@ public function storeMessage(Request $request, Community $community)
                 ->with('error', __('You do not have permission to demote users.'));
         }
 
-        // Update the user's role to member
         $community->users()->updateExistingPivot($user->user_id, [
             'role' => 'member'
         ]);
@@ -623,19 +954,15 @@ public function storeMessage(Request $request, Community $community)
             ->with('success', __('User has been demoted to member.'));
     }
 
-    /**
-     * Leave a community
-     */
+
     public function leave(Community $community)
     {
-        // Check if member
         $isMember = $community->users()->where('users.user_id', Auth::id())->exists();
         if (!$isMember) {
             return redirect()->route('communities.index')
                 ->with('error', __('You are not a member of this community.'));
         }
 
-        // Check if last admin/moderator
         $userRole = $community->users()->where('users.user_id', Auth::id())->first()->pivot->role ?? 'member';
 
         if (in_array($userRole, ['admin', 'moderator'])) {
@@ -649,20 +976,15 @@ public function storeMessage(Request $request, Community $community)
             }
         }
 
-        // Leave the community
         $community->users()->detach(Auth::id());
 
-        // Redirect to communities index page with success message
         return redirect()->route('communities.index')
             ->with('success', __('You have successfully left the community.'));
     }
 
-    /**
-     * Display the moderation dashboard for a community
-     */
+
     public function moderation(Community $community)
     {
-        // Check if user has moderation privileges
         if (!Auth::check()) {
             return redirect()->route('login')
                 ->with('error', __('You need to log in to access this page.'));
@@ -678,30 +1000,25 @@ public function storeMessage(Request $request, Community $community)
                 ->with('error', __('You do not have permission to access the moderation dashboard.'));
         }
 
-        // Get members with their roles
         $members = $community->users()
             ->withPivot('role', 'tg_gabung')
             ->get();
 
-        // Get banned users
         $BanUserss = BanUsers::where('community_id', $community->community_id)
             ->with(['user', 'bannedBy'])
             ->get();
 
-        // Get muted users
         $MuteUserss = MuteUsers::where('community_id', $community->community_id)
             ->where('unmute_at', '>', now())
             ->with(['user', 'mutedBy'])
             ->get();
 
-        // Get message statistics
         $messageStats = Message::where('community_id', $community->community_id)
             ->selectRaw('user_id, COUNT(*) as count')
             ->groupBy('user_id')
             ->with('user')
             ->get();
 
-        // Get chat lock status
         $isChatLocked = CommunityLock::where('community_id', $community->community_id)->exists();
         $lockInfo = null;
 
@@ -711,7 +1028,7 @@ public function storeMessage(Request $request, Community $community)
                 ->first();
         }
 
-        return view('community.moderation', compact(
+        return view('admin.community.moderation', compact(
             'community',
             'members',
             'BanUserss',
@@ -723,4 +1040,154 @@ public function storeMessage(Request $request, Community $community)
             'isSystemAdmin'
         ));
     }
+
+
+
+public function muteUser(Request $request, Community $community)
+{
+    $request->validate([
+        'user_id' => 'required|exists:users,user_id',
+        'duration' => 'required|integer|min:1|max:10080',
+        'reason' => 'nullable|string|max:255',
+    ]);
+
+    $userId = $request->user_id;
+    $duration = (int)$request->duration;
+    $reason = $request->reason;
+    $unmuteAt = now()->addMinutes($duration);
+
+
+     MuteUsers::updateOrCreate(
+        [
+            'community_id' => $community->community_id,
+            'user_id' => $userId
+        ],
+        [
+            'muted_by' => Auth::id(),
+            'reason' => $reason,
+            'unmute_at' => $unmuteAt
+        ]
+    );
+
+     $existingMute = MuteUsers::where('community_id', $community->community_id)
+        ->where('user_id', $userId)
+        ->where('unmute_at', '>', now())
+        ->first();
+
+    if ($existingMute) {
+        return redirect()->back()->with('info', 'Pengguna sudah dalam keadaan dibisukan sampai ' .
+            $existingMute->unmute_at->format('H:i, d M Y'));
+    }
+
+     $targetUser = User::find($userId);
+    if (!$targetUser) {
+        return redirect()->back()->with('error', 'Pengguna tidak ditemukan.');
+    }
+
+    if ($targetUser->role === 'admin') {
+        return redirect()->back()->with('error', 'Anda tidak dapat membisukan administrator sistem.');
+    }
+
+    $targetMember = $community->users()
+        ->where('users.user_id', $userId)
+        ->first();
+
+    $currentMember = $community->users()
+        ->where('users.user_id', Auth::id())
+        ->first();
+
+    $isSystemAdmin = Auth::user()->role === 'admin';
+    $isCommAdmin = $currentMember && $currentMember->pivot->role === 'admin';
+    $isModerator = $currentMember && ($currentMember->pivot->role === 'moderator' || $currentMember->pivot->role === 'admin');
+
+    if (!$isModerator && !$isSystemAdmin) {
+        return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk membisukan pengguna.');
+    }
+
+    if ($targetMember && $targetMember->pivot->role === 'admin' && !$isSystemAdmin && !$isCommAdmin) {
+        return redirect()->back()->with('error', 'Anda tidak dapat membisukan admin komunitas.');
+    }
+
+    $unmuteAt = now()->addMinutes($duration);
+
+
+    if ($existingMute) {
+        $existingMute->unmute_at = $unmuteAt;
+        $existingMute->muted_by = Auth::id();
+        $existingMute->reason = $reason;
+        $existingMute->save();
+
+        return redirect()->back()->with('success', 'Durasi bisu pengguna telah diperbarui.');
+    }
+
+    $mute = new MuteUsers();
+    $mute->community_id = $community->community_id;
+    $mute->user_id = $userId;
+    $mute->muted_by = Auth::id();
+    $mute->reason = $reason;
+    $mute->unmute_at = $unmuteAt;
+    $mute->save();
+
+    return redirect()->back()->with('success', 'Pengguna telah dibisukan hingga ' . $unmuteAt->format('H:i, d M Y'));
+}
+
+public function banUser(Request $request, Community $community)
+{
+    $request->validate([
+        'user_id' => 'required|exists:users,user_id',
+        'reason' => 'nullable|string|max:255',
+    ]);
+
+    $userId = $request->user_id;
+    $reason = $request->reason;
+
+
+    $targetUser = User::find($userId);
+    if (!$targetUser) {
+        return redirect()->back()->with('error', 'Pengguna tidak ditemukan.');
+    }
+
+
+    $existingBan = BanUsers::where('community_id', $community->community_id)
+        ->where('user_id', $userId)
+        ->first();
+
+    if ($existingBan) {
+        return redirect()->back()->with('info', 'Pengguna sudah dalam keadaan diblokir sejak ' .
+            $existingBan->banned_at->format('H:i, d M Y'));
+    }
+
+
+    $targetMember = $community->users()->where('users.user_id', $userId)->first();
+    $currentMember = $community->users()->where('users.user_id', Auth::id())->first();
+
+    $isSystemAdmin = Auth::user()->role === 'admin';
+    $isCommAdmin = $currentMember && $currentMember->pivot->role === 'admin';
+    $isModerator = $currentMember && ($currentMember->pivot->role === 'moderator' || $currentMember->pivot->role === 'admin');
+
+    if (!$isModerator && !$isSystemAdmin) {
+        return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk memblokir pengguna.');
+    }
+
+    if ($targetMember && $targetMember->pivot->role === 'admin' && !$isSystemAdmin) {
+        return redirect()->back()->with('error', 'Anda tidak dapat memblokir admin komunitas.');
+    }
+
+    if ($targetMember && $targetMember->pivot->role === 'moderator' && !$isSystemAdmin && !$isCommAdmin) {
+        return redirect()->back()->with('error', 'Anda tidak dapat memblokir moderator komunitas.');
+    }
+
+    BanUsers::create([
+        'community_id' => $community->community_id,
+        'user_id' => $userId,
+        'banned_by' => Auth::id(),
+        'banned_at' => now(),
+        'reason' => $request->reason
+    ]);
+
+    $community->users()->detach($userId);
+
+    return redirect()->back()->with('success', 'Pengguna telah berhasil diblokir dari komunitas.');
+}
+
 }

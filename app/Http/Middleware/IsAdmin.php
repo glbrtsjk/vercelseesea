@@ -8,13 +8,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 class IsAdmin
 {
-    /**
-     * Handle an incoming request.
-     */
+
     public function handle(Request $request, Closure $next): Response
     {
         if (!$request->user() || !$request->user()->isAdmin()) {
-            abort(403, 'Unauthorized action.');
+            abort(403, 'Anda tidak memiliki akses untuk mengakses halaman ini.');
         }
 
         return $next($request);

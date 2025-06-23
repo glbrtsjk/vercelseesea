@@ -33,12 +33,10 @@ class CommunityLock extends Model
 
     public static function canLock(User $user, Community $community)
     {
-        // Get the user's membership in the community
         $member = $community->users()
             ->where('users.user_id', $user->user_id)
             ->first();
 
-        // Only users with moderator role can lock/unlock
         return $member && $member->pivot->role === 'moderator';
     }
 }

@@ -6,9 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+
     public function up(): void
     {
         Schema::create('ban_users', function (Blueprint $table) {
@@ -24,14 +22,10 @@ return new class extends Migration
             $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->foreign('banned_by')->references('user_id')->on('users')->onDelete('cascade');
 
-            // Ensure a user can only be banned once per community
             $table->unique(['community_id', 'user_id']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('ban_users');

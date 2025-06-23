@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
         User::create([
             'name' => 'gilbertoo',
             'email' => 'gilbertoo@gmail.com',
-            'password' => Hash::make('gilbertoo125s'), // Remember to change this in production
+            'password' => Hash::make('gilbertoo125s'),
             'role' => 'admin',
             'email_verified_at' => Carbon::now(),
             'bio' => 'Admin untuk semua',
@@ -49,7 +49,7 @@ class UserSeeder extends Seeder
             'updated_at' => Carbon::now(),
         ]);
 
-        // Optional: Create more users with Faker if you want more test data
+       
         if (app()->environment('local', 'development')) {
             \App\Models\User::factory(10)->create();
         }

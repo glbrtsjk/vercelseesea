@@ -1,4 +1,3 @@
-<!-- filepath: c:\xampp\htdocs\projectpwl\resources\views\layouts\app.blade.php -->
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -16,7 +15,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@tailwindcss/typography@0.4.0/dist/typography.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -27,10 +28,8 @@
     <!-- Header -->
     <header class="bg-white shadow sticky top-0 z-50">
         <nav class="container mx-auto px-4 py-4 flex flex-wrap items-center justify-between">
-            <!-- Logo -->
             <a href="{{ route('home') }}" class="flex items-center flex-shrink-0 mr-6">
-                <img src="{{ asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-8 w-auto">
-                <span class="font-bold text-xl ml-2 text-blue-600">Knowledge</span>
+                <span class="font-bold text-xl ml-2 text-blue-600">SeeSea</span>
             </a>
 
             <!-- Mobile menu button -->
@@ -49,20 +48,23 @@
                         Home
                     </a>
                     <a href="{{ route('articles.index') }}" class="block mt-4 lg:inline-block lg:mt-0 text-gray-700 hover:text-blue-600 mr-6 {{ request()->routeIs('articles.*') ? 'font-semibold text-blue-600' : '' }}">
-                        Articles
+                        Artikel
                     </a>
                     <a href="{{ route('communities.index') }}" class="block mt-4 lg:inline-block lg:mt-0 text-gray-700 hover:text-blue-600 mr-6 {{ request()->routeIs('communities.*') ? 'font-semibold text-blue-600' : '' }}">
-                        Communities
+                        Komunitas
                     </a>
-                    <a href="{{ route('tags.index') }}" class="block mt-4 lg:inline-block lg:mt-0 text-gray-700 hover:text-blue-600 mr-6 {{ request()->routeIs('tags.*') ? 'font-semibold text-blue-600' : '' }}">
-                        Tags
+                    <a href="{{ route('funfacts.index') }}" class="block mt-4 lg:inline-block lg:mt-0 text-gray-700 hover:text-blue-600 mr-6 {{ request()->routeIs('tags.*') ? 'font-semibold text-blue-600' : '' }}">
+                        Funfact
+                    </a>
+                      <a href="{{ route('tags.index') }}" class="block mt-4 lg:inline-block lg:mt-0 text-gray-700 hover:text-blue-600 mr-6 {{ request()->routeIs('tags.*') ? 'font-semibold text-blue-600' : '' }}">
+                        Tag
                     </a>
                 </div>
 
-                <!-- Search -->
+
                 <div class="relative mx-4 hidden lg:block lg:w-64">
                     <form action="{{ route('articles.search') }}" method="GET">
-                        <input type="text" name="query" placeholder="Search articles..." class="w-full px-4 py-2 pr-8 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white">
+                        <input type="text" name="query" placeholder="Cari Artikel..." class="w-full px-4 py-2 pr-8 rounded-lg bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white">
                         <button type="submit" class="absolute right-0 top-0 mt-2 mr-3 text-gray-500">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -88,33 +90,33 @@
                                         Admin Dashboard
                                     </a>
                                 <a href="{{ route('admin.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    My Profile
+                                    Profil Saya
                                 </a>
                                 <a href="{{ route('admin.dashboard.article') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    My Articles
+                                    Artikel Saya
                                 </a>
                                 <a href="{{ route('admin.dashboard.community') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    My Communities
+                                   Komunitas Saya
                                 </a>
                                  @else
-                                    <a href="{{ route('dashboard.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <a href="{{ route('dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         Dashboard
                                     </a>
-                                     <a href="{{ route('.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    My Profile
+                                     <a href="{{ route('user.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    Profil Saya
                                 </a>
                                 <a href="{{ route('user.articles') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    My Articles
+                                    Artikel Saya
                                 </a>
                                 <a href="{{ route('user.communities') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    My Communities
+                                   Komunitas Saya
                                 </a>
                                 @endif
                                 <div class="border-t border-gray-100 my-1"></div>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        Sign Out
+                                        Keluar
                                     </button>
                                 </form>
                             </div>
@@ -143,83 +145,96 @@
         </div>
     </header>
 
-    <!-- Flash Messages -->
-    @if(session('success') || session('error') || session('info') || session('warning'))
-        <div class="container mx-auto px-4 py-4">
-            @if(session('success'))
-                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
-                    <p>{{ session('success') }}</p>
-                </div>
-            @endif
-            @if(session('error'))
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-                    <p>{{ session('error') }}</p>
-                </div>
-            @endif
-            @if(session('info'))
-                <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4" role="alert">
-                    <p>{{ session('info') }}</p>
-                </div>
-            @endif
-            @if(session('warning'))
-                <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
-                    <p>{{ session('warning') }}</p>
-                </div>
-            @endif
-        </div>
-    @endif
-
     <!-- Main Content -->
     <main class="flex-grow">
         @yield('content')
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-12">
-        <div class="container mx-auto px-4">
-            <div class="flex flex-wrap">
-                <div class="w-full lg:w-1/3 mb-8 lg:mb-0">
-                    <h2 class="text-lg font-semibold mb-4">About Us</h2>
-                    <p class="text-gray-300 text-sm leading-relaxed">
-                        Knowledge Platform is a community-driven platform where knowledge seekers and sharers come together to learn, teach, and grow.
-                    </p>
-                </div>
-                <div class="w-full lg:w-1/3 mb-8 lg:mb-0 lg:px-8">
-                    <h2 class="text-lg font-semibold mb-4">Quick Links</h2>
-                    <ul class="text-gray-300 text-sm space-y-2">
-                        <li><a href="{{ route('home') }}" class="hover:text-white transition duration-150">Home</a></li>
-                        <li><a href="{{ route('articles.index') }}" class="hover:text-white transition duration-150">Articles</a></li>
-                        <li><a href="{{ route('communities.index') }}" class="hover:text-white transition duration-150">Communities</a></li>
-                        <li><a href="{{ route('tags.index') }}" class="hover:text-white transition duration-150">Tags</a></li>
-                    </ul>
-                </div>
-                <div class="w-full lg:w-1/3">
-                    <h2 class="text-lg font-semibold mb-4">Contact Us</h2>
-                    <ul class="text-gray-300 text-sm space-y-2">
-                        <li class="flex items-center">
-                            <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-                            </svg>
-                            <a href="mailto:info@knowledgeplatform.com" class="hover:text-white transition duration-150">info@knowledgeplatform.com</a>
-                        </li>
-                    </ul>
-                    <div class="mt-4 flex space-x-4">
-                        <a href="#" class="text-gray-300 hover:text-white transition duration-150">
-                            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"></path>
-                            </svg>
+    <footer class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-12 relative overflow-hidden ">
+        <div class="absolute inset-0 z-0">
+            <div class="deep-sea-bubbles absolute inset-0 opacity-5"></div>
+            <div class="ocean-current absolute inset-0 opacity-5"></div>
+        </div>
+
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                <div>
+                    <h3 class="text-xl font-bold mb-6 text-cyan-400">Tentang SEESEA</h3>
+                    <p class="text-gray-400 mb-6 leading-relaxed">Didedikasikan untuk berbagi pengetahuan tentang ekosistem laut, konservasi kehidupan laut, dan mempromosikan praktik berkelanjutan untuk lautan kita.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-cyan-400 transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"/></svg>
                         </a>
-                        <a href="#" class="text-gray-300 hover:text-white transition duration-150">
-                            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"></path>
-                            </svg>
+                        <a href="#" class="text-gray-400 hover:text-cyan-400 transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723 10.054 10.054 0 01-3.127 1.195A4.92 4.92 0 0016.77 2.5a4.923 4.923 0 00-4.923 4.923c0 .386.043.76.126 1.12A13.986 13.986 0 013.401 3.114a4.892 4.892 0 00-.667 2.476 4.92 4.92 0 002.19 4.098A4.902 4.902 0 012.5 9.13v.062a4.924 4.924 0 003.95 4.828 4.996 4.996 0 01-2.225.084 4.93 4.93 0 004.6 3.419A9.87 9.87 0 012 19.54a13.934 13.934 0 007.548 2.206c9.054 0 14-7.496 14-13.99 0-.21-.004-.42-.012-.63a10 10 0 002.417-2.556z"/></svg>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-cyan-400 transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                         </a>
                     </div>
                 </div>
+
+                <div>
+                    <h3 class="text-xl font-bold mb-6 text-cyan-400">Link Cepat</h3>
+                    <ul class="space-y-4">
+                        <li><a href="{{ route('home') }}" class="text-gray-400 hover:text-white transition-colors">Beranda</a></li>
+                        <li><a href="{{ route('articles.index') }}" class="text-gray-400 hover:text-white transition-colors">Jelajahi Artikel</a></li>
+                        <li><a href="{{ route('funfacts.index') }}" class="text-gray-400 hover:text-white transition-colors">Fakta Laut</a></li>
+                        @auth
+                            @if(auth()->user()->is_admin == true || auth()->user()->role == 'admin')
+                                <li><a href="{{ route('admin.edit-profile') }}" class="text-gray-400 hover:text-white transition-colors">Profil Saya</a></li>
+                            @else
+                                <li><a href="{{ route('user.edit-profile') }}" class="text-gray-400 hover:text-white transition-colors">Profil Saya</a></li>
+                            @endif
+                        @else
+                            <li><a href="{{ route('login') }}" class="text-gray-400 hover:text-white transition-colors">Masuk</a></li>
+                            <li><a href="{{ route('register') }}" class="text-gray-400 hover:text-white transition-colors">Daftar</a></li>
+                        @endauth
+                    </ul>
+                </div>
+
+               <div>
+    <h3 class="text-xl font-bold mb-6 text-cyan-400">Kategori Laut</h3>
+    <ul class="space-y-4">
+        @if(isset($categories) && $categories->count() > 0)
+            @foreach($categories->take(6) as $category)
+                <li><a href="{{ route('articles.index', ['category' => $category->category_id]) }}" class="text-gray-400 hover:text-white transition-colors">{{ $category->nama_kategori }}</a></li>
+            @endforeach
+        @else
+            <li><span class="text-gray-400">Kategori tidak tersedia</span></li>
+        @endif
+    </ul>
+</div>
+
+                <div>
+                    <h3 class="text-xl font-bold mb-6 text-cyan-400">Informasi Kontak</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-cyan-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <span class="text-gray-400">Jl.Dr.Mansyur</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-cyan-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                            </svg>
+                            <span class="text-gray-400">(+62) 999 8888 7777</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-6 h-6 text-cyan-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                            <span class="text-gray-400">seasea@belajar.com</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <div class="border-t border-gray-700 mt-8 pt-8 text-sm text-gray-400 text-center">
-                <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+
+            <div class="border-t border-gray-800 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-400 text-sm mb-4 md:mb-0">© 2025 SeaSea. Hak cipta dilindungi. Dirancang dengan 💙 untuk laut.</p>
             </div>
         </div>
     </footer>
@@ -237,7 +252,6 @@
             }
         });
 
-        // Close alert messages
         document.querySelectorAll('[role="alert"]').forEach(alert => {
             const closeButton = document.createElement('button');
             closeButton.innerHTML = '&times;';
@@ -247,8 +261,10 @@
             });
             alert.insertBefore(closeButton, alert.firstChild);
         });
+
     </script>
 
     @yield('scripts')
+    @yield('styles')
 </body>
 </html>

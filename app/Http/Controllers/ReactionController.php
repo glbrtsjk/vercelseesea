@@ -17,11 +17,11 @@ class ReactionController extends Controller
     }
 
     /**
-     * Store a new reaction or update existing one using standard form submission.
+     * Menyimpan reaksi baru atau memperbarui yang sudah ada menggunakan pengiriman formulir standar.
      */
     public function store(Request $request)
     {
-        // Validate request data
+        // Memvalidasi data permintaan
         $request->validate([
             'reactionable_id' => 'required|integer',
             'reactionable_type' => 'required|string|in:App\\Models\\Article,App\\Models\\Comment,App\\Models\\CommentReply',
@@ -29,17 +29,17 @@ class ReactionController extends Controller
             'redirect_url' => 'required|string',
         ]);
 
-        // Check if the reactionable exists
+        // Memeriksa apakah objek yang dapat direaksikan ada
         $reactionableType = $request->reactionable_type;
         $reactionableId = $request->reactionable_id;
 
         $exists = $reactionableType::find($reactionableId);
         if (!$exists) {
             return redirect()->back()
-                ->with('error', 'The content you are trying to react to does not exist.');
+                ->with('error', 'Konten yang ingin Anda beri reaksi tidak ada.');
         }
 
-        // Find existing reaction by this user for this content
+        // Mencari reaksi yang sudah ada dari pengguna ini untuk konten ini
         $existingReaction = Reaction::where('user_id', Auth::id())
             ->where('reactionable_id', $reactionableId)
             ->where('reactionable_type', $reactionableType)
@@ -48,39 +48,39 @@ class ReactionController extends Controller
         $message = '';
 
         if ($existingReaction) {
-            // If same reaction, remove it (toggle off)
+            // Jika reaksi sama, hapus (nonaktifkan)
             if ($existingReaction->jenis_reaksi == $request->jenis_reaksi) {
                 $existingReaction->delete();
-                $message = ucfirst($request->jenis_reaksi) . ' reaction removed.';
+                $message = ucfirst($request->jenis_reaksi) . ' reaksi dihapus.';
             } else {
-                // If different reaction, update it
+                // Jika reaksi berbeda, perbarui
                 $existingReaction->jenis_reaksi = $request->jenis_reaksi;
                 $existingReaction->save();
-                $message = 'Reaction changed to ' . $request->jenis_reaksi . '.';
+                $message = 'Reaksi diubah menjadi ' . $request->jenis_reaksi . '.';
             }
         } else {
-            // Create new reaction
+            // Buat reaksi baru
             Reaction::create([
                 'jenis_reaksi' => $request->jenis_reaksi,
                 'user_id' => Auth::id(),
                 'reactionable_id' => $reactionableId,
                 'reactionable_type' => $reactionableType,
             ]);
-            $message = ucfirst($request->jenis_reaksi) . ' reaction added.';
+            $message = ucfirst($request->jenis_reaksi) . ' reaksi ditambahkan.';
         }
 
-        // Redirect back with success message
+        // Alihkan kembali dengan pesan sukses
         return redirect($request->redirect_url)
             ->with('success', $message)
             ->withFragment(isset($request->fragment) ? $request->fragment : '');
     }
 
     /**
-     * Display the reaction counts for an item.
+     * Menampilkan jumlah reaksi untuk suatu item.
      */
     public function show(Request $request, $type, $id)
     {
-        // Map URL parameters to model classes
+        // Memetakan parameter URL ke kelas model
         $modelMap = [
             'article' => Article::class,
             'comment' => Comment::class,
@@ -94,7 +94,7 @@ class ReactionController extends Controller
         $modelClass = $modelMap[$type];
         $item = $modelClass::findOrFail($id);
 
-        // Get users who reacted to this item, grouped by reaction type
+        // Mendapatkan pengguna yang memberi reaksi pada item ini, dikelompokkan berdasarkan jenis reaksi
         $reactionsByType = $item->reactions()
             ->with('user')
             ->get()
@@ -108,25 +108,25 @@ class ReactionController extends Controller
     }
 
     /**
-     * Remove a specific reaction.
+     * Menghapus reaksi tertentu.
      */
     public function destroy(Request $request)
     {
-        // Validate request data
+        // Memvalidasi data permintaan
         $request->validate([
             'reactionable_id' => 'required|integer',
             'reactionable_type' => 'required|string|in:App\\Models\\Article,App\\Models\\Comment,App\\Models\\CommentReply',
             'redirect_url' => 'required|string',
         ]);
 
-        // Delete the reaction
+        // Menghapus reaksi
         Reaction::where('user_id', Auth::id())
             ->where('reactionable_id', $request->reactionable_id)
             ->where('reactionable_type', $request->reactionable_type)
             ->delete();
 
         return redirect($request->redirect_url)
-            ->with('success', 'Reaction removed successfully')
+            ->with('success', 'Reaksi berhasil dihapus')
             ->withFragment(isset($request->fragment) ? $request->fragment : '');
     }
 }

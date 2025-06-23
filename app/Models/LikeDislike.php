@@ -16,17 +16,13 @@ class LikeDislike extends Model
         'likeable_type',
     ];
 
-    /**
-     * Get the parent likeable model.
-     */
+
     public function likeable()
     {
         return $this->morphTo();
     }
 
-    /**
-     * Get the user who created the like/dislike.
-     */
+    
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');

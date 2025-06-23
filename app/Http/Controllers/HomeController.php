@@ -12,18 +12,18 @@ use Illuminate\Support\Facades\DB;
 class HomeController extends Controller
 {
     /**
-     * Display the homepage with featured content.
+     * Menampilkan halaman utama dengan konten unggulan.
      */
     public function index()
     {
-        // Get latest published articles
+        // Mendapatkan artikel terbaru yang dipublikasikan
         $latestArticles = Article::where('status', 'published')
             ->with(['user', 'category', 'tags', 'reactions'])
             ->orderBy('tgl_upload', 'desc')
             ->take(6)
             ->get();
 
-        // Get popular articles based on reaction count
+        // Mendapatkan artikel populer berdasarkan jumlah reaksi
         $popularArticles = Article::where('status', 'published')
             ->withCount('reactions')
             ->with(['user', 'category', 'tags'])
@@ -31,22 +31,23 @@ class HomeController extends Controller
             ->take(4)
             ->get();
 
-        // Get random funfacts
+        // Mendapatkan fakta menarik secara acak
         $funfacts = Funfact::inRandomOrder()->take(3)->get();
 
-        // Get all categories
+        // Mendapatkan semua kategori
         $categories = Category::withCount('articles')->get();
 
-        // Get statistics for the metrics section
+        // Mendapatkan statistik untuk bagian metrik
         $stats = [
             'publishedArticles' => Article::where('status', 'published')->count(),
-            'activeUsers' => User::where('last_active_at', '>', now()->subDays(30))->count(),            'totalUsers' => User::count(),
+            'activeUsers' => User::where('last_active_at', '>', now()->subDays(30))->count(),
+            'totalUsers' => User::count(),
             'funfactCount' => Funfact::count(),
             'reactionCount' => DB::table('reactions')->count(),
-            'commentCount' => DB::table('comments')->count() // Using DB facade for simple count
+            'commentCount' => DB::table('comments')->count() // Menggunakan facade DB untuk penghitungan sederhana
         ];
 
-        return view('home', compact(
+        return view('home1', compact(
             'latestArticles',
             'popularArticles',
             'funfacts',
@@ -56,17 +57,17 @@ class HomeController extends Controller
     }
 
     /**
-     * Search for articles based on query
+     * Mencari artikel berdasarkan kueri
      */
     public function search(Request $request)
     {
         $query = $request->input('query');
         $categoryId = $request->input('category');
 
-        // Base query for approved articles
+        // Kueri dasar untuk artikel yang disetujui
         $articlesQuery = Article::where('is_approved', true);
 
-        // Apply search term if provided
+        // Menerapkan kata pencarian jika disediakan
         if ($query) {
             $articlesQuery->where(function ($q) use ($query) {
                 $q->where('judul', 'like', "%{$query}%")
@@ -78,7 +79,7 @@ class HomeController extends Controller
             $articlesQuery->where('category_id', $categoryId);
         }
 
-        // Get search results with related data
+        // Mendapatkan hasil pencarian dengan data terkait
         $articles = $articlesQuery->with(['user', 'category', 'tags'])
             ->orderBy('tgl_upload', 'desc')
             ->paginate(10);

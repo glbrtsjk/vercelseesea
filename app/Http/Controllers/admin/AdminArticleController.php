@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -24,7 +25,7 @@ class AdminArticleController extends Controller
     }
 
     /**
-     * Display a listing of the articles.
+     * Menampilkan daftar artikel.
      *
      * @return \Illuminate\Http\Response
      */
@@ -32,17 +33,17 @@ class AdminArticleController extends Controller
     {
         $query = Article::query()->with(['user', 'category']);
 
-        // Filter by status if provided
+        // Filter berdasarkan status jika disediakan
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
 
-        // Filter by category if provided
+        // Filter berdasarkan kategori jika disediakan
         if ($request->has('category') && $request->category) {
             $query->where('category_id', $request->category);
         }
 
-        // Search functionality
+        // Fungsi pencarian
         if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -51,7 +52,7 @@ class AdminArticleController extends Controller
             });
         }
 
-        // Sort options
+        // Opsi pengurutan
         $sort = $request->sort ?? 'newest';
         switch ($sort) {
             case 'oldest':
@@ -74,7 +75,7 @@ class AdminArticleController extends Controller
     }
 
     /**
-     * Show the form for creating a new article.
+     * Menampilkan formulir untuk membuat artikel baru.
      *
      * @return \Illuminate\Http\Response
      */
@@ -87,7 +88,7 @@ class AdminArticleController extends Controller
     }
 
     /**
-     * Store a newly created article in storage.
+     * Menyimpan artikel yang baru dibuat ke dalam penyimpanan.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
@@ -106,17 +107,17 @@ class AdminArticleController extends Controller
         ]);
 
         try {
-            // Generate slug
+            // Menghasilkan slug
             $slug = Str::slug($request->judul);
             $uniqueSlug = $this->createUniqueSlug($slug);
 
-            // Process image if uploaded
+            // Memproses gambar jika diunggah
             $imagePath = null;
             if ($request->hasFile('gambar')) {
                 $imagePath = $this->fileUploadService->uploadFile($request->file('gambar'), 'articles');
             }
 
-            // Create article
+            // Membuat artikel
             $article = Article::create([
                 'judul' => $request->judul,
                 'slug' => $uniqueSlug,
@@ -129,14 +130,14 @@ class AdminArticleController extends Controller
                 'is_featured' => $request->has('is_featured'),
             ]);
 
-            // If published directly, set approval details
+            // Jika langsung dipublikasikan, tetapkan detail persetujuan
             if ($request->status == 'published') {
                 $article->approved_by = Auth::id();
                 $article->approved_at = now();
                 $article->save();
             }
 
-            // Attach tags if any
+            // Melampirkan tag jika ada
             if ($request->has('tags')) {
                 $article->tags()->attach($request->tags);
             }
@@ -150,7 +151,7 @@ class AdminArticleController extends Controller
     }
 
     /**
-     * Display the specified article.
+     * Menampilkan artikel yang ditentukan.
      *
      * @param  \App\Models\Article  $article
      * @return \Illuminate\Http\Response
@@ -163,7 +164,7 @@ class AdminArticleController extends Controller
     }
 
     /**
-     * Show the form for editing the specified article.
+     * Menampilkan formulir untuk mengedit artikel yang ditentukan.
      *
      * @param  \App\Models\Article  $article
      * @return \Illuminate\Http\Response
@@ -178,7 +179,7 @@ class AdminArticleController extends Controller
     }
 
     /**
-     * Update the specified article in storage.
+     * Memperbarui artikel yang ditentukan dalam penyimpanan.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\Article  $article
@@ -198,34 +199,34 @@ class AdminArticleController extends Controller
         ]);
 
         try {
-            // Update slug if title changed
+            // Memperbarui slug jika judul berubah
             if ($article->judul !== $request->judul) {
                 $slug = Str::slug($request->judul);
                 $uniqueSlug = $this->createUniqueSlug($slug, $article->article_id);
                 $article->slug = $uniqueSlug;
             }
 
-            // Process image if new one uploaded
+            // Memproses gambar jika yang baru diunggah
             if ($request->hasFile('gambar')) {
-                // Delete old image if exists
+                // Menghapus gambar lama jika ada
                 if ($article->gambar) {
                     Storage::delete($article->gambar);
                 }
                 $article->gambar = $this->fileUploadService->uploadFile($request->file('gambar'), 'articles');
             }
 
-            // Update article details
+            // Memperbarui detail artikel
             $article->judul = $request->judul;
             $article->konten_isi_artikel = $request->konten_isi_artikel;
             $article->category_id = $request->category_id;
             $article->is_featured = $request->has('is_featured');
 
-            // Handle status change
+            // Menangani perubahan status
             $oldStatus = $article->status;
             $newStatus = $request->status;
 
             if ($oldStatus != $newStatus && $newStatus == 'published') {
-                // If changing to published, set approval details
+                // Jika berubah menjadi diterbitkan, tetapkan detail persetujuan
                 $article->approved_by = Auth::id();
                 $article->approved_at = now();
             }
@@ -233,7 +234,7 @@ class AdminArticleController extends Controller
             $article->status = $newStatus;
             $article->save();
 
-            // Sync tags
+            // Menyinkronkan tag
             if ($request->has('tags')) {
                 $article->tags()->sync($request->tags);
             } else {
@@ -249,7 +250,7 @@ class AdminArticleController extends Controller
     }
 
     /**
-     * Remove the specified article from storage.
+     * Menghapus artikel yang ditentukan dari penyimpanan.
      *
      * @param  \App\Models\Article  $article
      * @return \Illuminate\Http\Response
@@ -257,12 +258,12 @@ class AdminArticleController extends Controller
     public function destroy(Article $article)
     {
         try {
-            // Delete image if exists
+            // Menghapus gambar jika ada
             if ($article->gambar) {
                 Storage::delete($article->gambar);
             }
 
-            // Delete the article
+            // Menghapus artikel
             $article->delete();
 
             return redirect()->route('admin.articles.index')
@@ -277,14 +278,14 @@ class AdminArticleController extends Controller
 {
     $articles = Article::where('status', 'pending')
         ->with(['user', 'category'])
-        ->orderBy('tgl_upload', 'asc')  // Oldest first
+        ->orderBy('tgl_upload', 'asc')  // Yang terlama dulu
         ->paginate(15);
 
     return view('admin.articles.pending', compact('articles'));
 }
 
 /**
- * Approve an article
+ * Menyetujui artikel
  *
  * @param Article $article
  * @return \Illuminate\Http\Response
@@ -296,13 +297,13 @@ public function approve(Article $article)
     $article->approved_at = now();
     $article->save();
 
-    // Send notification to the author (you can implement this later)
+    // Mengirim notifikasi kepada penulis (Anda bisa mengimplementasikan ini nanti)
 
-    return redirect()->back()->with('success', 'Article has been approved successfully!');
+    return redirect()->back()->with('success', 'Article telah berhasil disetujui!');
 }
 
 /**
- * Reject an article with feedback
+ * Menolak artikel dengan umpan balik
  *
  * @param Request $request
  * @param Article $article
@@ -318,22 +319,22 @@ public function reject(Request $request, Article $article)
     $article->rejection_reason = $request->rejection_reason;
     $article->save();
 
-    // Send notification to the author (you can implement this later)
 
-    return redirect()->back()->with('success', 'Article has been rejected successfully!');
+
+    return redirect()->back()->with('success', 'Article telah berhasil ditolak!');
 }
 
     /**
-     * Create a unique slug
+     * Membuat slug yang unik
      */
     private function createUniqueSlug($slug, $ignoreId = null)
     {
         $originalSlug = $slug;
         $count = 1;
 
-        // Check if the slug exists
+        // Memeriksa apakah slug sudah ada
         while (true) {
-            // If we're updating an article, ignore its ID
+            // Jika kita sedang memperbarui artikel, abaikan ID-nya
             $query = Article::where('slug', $slug);
             if ($ignoreId) {
                 $query->where('article_id', '!=', $ignoreId);

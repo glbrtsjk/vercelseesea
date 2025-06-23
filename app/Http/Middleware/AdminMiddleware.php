@@ -8,21 +8,13 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
-     */
+
     public function handle(Request $request, Closure $next)
     {
-        // Check if user is authenticated and has admin role
-        if (Auth::check() && Auth::user()->role === 'admin') {
+       if (Auth::check() && Auth::user()->role === 'admin') {
             return $next($request);
         }
 
-        // Redirect to home page if not an admin
-        return redirect()->route('dashboard.index')->with('error', 'You do not have permission to access this page.');
+        return redirect()->route('dashboard')->with('error', 'Kamu Tidak bisa mengakses halaman ini');
     }
 }

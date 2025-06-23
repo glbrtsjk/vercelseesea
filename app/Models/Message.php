@@ -13,15 +13,28 @@ class Message extends Model
 
     protected $fillable = [
         'isi_pesan',
-        'gambar',
         'tgl_pesan',
         'user_id',
-        'community_id'
+        'community_id',
+        'lampiran',
+        'lampiran_nama',
+        'lampiran_tipe',
     ];
 
     protected $casts = [
         'tgl_pesan' => 'datetime',
     ];
+
+    public function setKontenAttribute($value)
+    {
+        $this->attributes['isi_pesan'] = $value;
+    }
+
+    // Add an accessor to get konten from isi_pesan
+    public function getKontenAttribute()
+    {
+        return $this->attributes['isi_pesan'];
+    }
 
     public function user()
     {

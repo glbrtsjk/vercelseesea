@@ -12,14 +12,14 @@ class CommentReply extends Model
     protected $primaryKey = 'reply_id';
 
     protected $fillable = [
-        'konten',
+        'isi_balasan',
         'user_id',
         'comment_id',
-        'tgl_reply'
+        'tgl_balasan',
     ];
 
     protected $casts = [
-        'tgl_reply' => 'datetime',
+        'tgl_balasan' => 'datetime',
     ];
 
     public function user()
@@ -32,33 +32,25 @@ class CommentReply extends Model
         return $this->belongsTo(Comment::class, 'comment_id', 'comment_id');
     }
 
-    /**
-     * Get all likes/dislikes for this reply
-     */
+
     public function likeDislikes()
     {
         return $this->morphMany(LikeDislike::class, 'likeable');
     }
 
-    /**
-     * Get count of likes for this reply
-     */
+
     public function getLikesCountAttribute()
     {
         return $this->likeDislikes()->where('type', 'like')->count();
     }
 
-    /**
-     * Get count of dislikes for this reply
-     */
+
     public function getDislikesCountAttribute()
     {
         return $this->likeDislikes()->where('type', 'dislike')->count();
     }
 
-    /**
-     * Check if a specific user has liked this reply
-     */
+
     public function isLikedBy($userId)
     {
         return $this->likeDislikes()
@@ -67,9 +59,7 @@ class CommentReply extends Model
             ->exists();
     }
 
-    /**
-     * Check if a specific user has disliked this reply
-     */
+    
     public function isDislikedBy($userId)
     {
         return $this->likeDislikes()

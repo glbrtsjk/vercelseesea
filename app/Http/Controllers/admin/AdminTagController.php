@@ -15,20 +15,20 @@ class AdminTagController extends Controller
     }
 
     /**
-     * Display a listing of tags.
+     * Menampilkan daftar tag.
      */
     public function index(Request $request)
     {
         $query = Tag::query()->withCount('articles');
 
-        // Handle search
+        // Menangani pencarian
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where('nama_tag', 'LIKE', "%{$search}%")
                  ->orWhere('deskripsi', 'LIKE', "%{$search}%");
         }
 
-        // Handle sorting
+        // Menangani pengurutan
         $sort = $request->sort ?? 'name';
 
         switch ($sort) {
@@ -47,11 +47,11 @@ class AdminTagController extends Controller
 
         $tags = $query->paginate(20);
 
-        return view('admin.tag.index', compact('tags'));
+        return view('admin.dashboard.tag', compact('tags'));
     }
 
     /**
-     * Show the form for creating a new tag.
+     * Menampilkan form untuk membuat tag baru.
      */
     public function create()
     {
@@ -59,7 +59,7 @@ class AdminTagController extends Controller
     }
 
     /**
-     * Store a newly created tag in storage.
+     * Menyimpan tag baru ke dalam penyimpanan.
      */
     public function store(Request $request)
     {
@@ -70,7 +70,7 @@ class AdminTagController extends Controller
 
         $slug = Str::slug($request->nama_tag);
 
-        // Check if slug exists
+        // Memeriksa apakah slug sudah ada
         $count = 0;
         $originalSlug = $slug;
         while (Tag::where('slug', $slug)->exists()) {
@@ -85,20 +85,20 @@ class AdminTagController extends Controller
         ]);
 
         return redirect()->route('admin.tags.index')
-            ->with('success', 'Tag created successfully.');
+            ->with('success', 'Tag berhasil dibuat.');
     }
 
     /**
-     * Show the form for editing the specified tag.
+     * Menampilkan form untuk mengedit tag tertentu.
      */
     public function edit(Tag $tag)
     {
-        $tag->loadCount(['articles', 'users']);
-        return view('admin.tag.edit', compact('tag'));
+       $tag->loadCount(['articles', 'users']);
+    return view('admin.tag.edit', compact('tag'));
     }
 
     /**
-     * Update the specified tag in storage.
+     * Memperbarui tag tertentu dalam penyimpanan.
      */
     public function update(Request $request, Tag $tag)
     {
@@ -107,11 +107,11 @@ class AdminTagController extends Controller
             'deskripsi' => 'nullable|string|max:500'
         ]);
 
-        // Only update slug if the name has changed
+        // Hanya memperbarui slug jika nama telah berubah
         if ($tag->nama_tag != $request->nama_tag) {
             $slug = Str::slug($request->nama_tag);
 
-            // Check if slug exists
+            // Memeriksa apakah slug sudah ada
             $count = 0;
             $originalSlug = $slug;
             while (Tag::where('slug', $slug)->where('tag_id', '!=', $tag->tag_id)->exists()) {
@@ -126,38 +126,38 @@ class AdminTagController extends Controller
         $tag->deskripsi = $request->deskripsi;
         $tag->save();
 
-        return redirect()->route('admin.tags.edit', $tag)
-            ->with('success', 'Tag updated successfully.');
+        return redirect()->route('admin.tags.index')
+            ->with('success', 'Tag berhasil diperbarui.');
     }
 
     /**
-     * Remove the specified tag from storage.
+     * Menghapus tag tertentu dari penyimpanan.
      */
     public function destroy(Tag $tag)
     {
-        // We'll handle tags with articles - just detach them before deleting
-        // This will keep articles but remove the tag association
+        // Kami akan menangani tag dengan artikel - cukup lepaskan hubungannya sebelum menghapus
+        // Ini akan mempertahankan artikel tetapi menghapus asosiasi tag
         $articleCount = $tag->articles()->count();
         $userCount = $tag->users()->count();
 
         if ($articleCount > 0) {
-            // Detach all article relationships
+            // Melepaskan semua hubungan artikel
             $tag->articles()->detach();
         }
 
         if ($userCount > 0) {
-            // Detach all user relationships
+            // Melepaskan semua hubungan pengguna
             $tag->users()->detach();
         }
 
         $tag->delete();
 
         return redirect()->route('admin.tags.index')
-            ->with('success', 'Tag deleted successfully. It has been removed from ' . $articleCount . ' articles and ' . $userCount . ' user subscriptions.');
+            ->with('success', 'Tag berhasil dihapus. Tag telah dihapus dari ' . $articleCount . ' artikel dan ' . $userCount . ' langganan pengguna.');
     }
 
     /**
-     * Merge a source tag into a target tag
+     * Menggabungkan tag sumber ke dalam tag target
      */
     public function merge(Request $request)
     {
@@ -184,6 +184,6 @@ class AdminTagController extends Controller
         $sourceTag->delete();
 
         return redirect()->route('admin.tags.index')
-            ->with('success', "Tag '{$sourceTag->nama_tag}' has been merged into '{$targetTag->nama_tag}'. Moved {$articleCount} articles and {$userCount} user subscriptions.");
+            ->with('success', "Tag '{$sourceTag->nama_tag}' telah digabungkan ke '{$targetTag->nama_tag}'. Memindahkan {$articleCount} artikel dan {$userCount} langganan pengguna.");
     }
 }

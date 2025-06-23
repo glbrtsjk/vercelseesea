@@ -12,6 +12,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $primaryKey = 'user_id';
+     protected $table = 'users';
 
     protected $fillable = [
         'name',
@@ -34,6 +35,20 @@ class User extends Authenticatable
         'banned_at' => 'datetime',
         'last_active_at' => 'datetime',
     ];
+
+    public function getProfilePhotoUrlAttribute()
+{
+    if ($this->foto_profil) {
+
+        if (str_starts_with($this->foto_profil, 'http')) {
+            return $this->foto_profil;
+        }
+
+        return asset('storage/' . $this->foto_profil);
+    }
+
+    return asset('images/default-avatar.png');
+}
 
     public function articles()
     {
@@ -64,7 +79,7 @@ class User extends Authenticatable
 
     public function tags()
     {
-        return $this->belongsToMany(Tag::class, 'user_tag_pivots', 'user_id', 'tag_id')
+        return $this->belongsToMany(Tag::class, 'user_tag_pivot', 'user_id', 'tag_id')
                 ->withTimestamps();
     }
 

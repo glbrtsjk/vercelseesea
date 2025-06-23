@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -31,7 +31,7 @@ class ForgotPasswordController extends Controller
 
     public function showResetForm(Request $request)
     {
-        return view('auth.reset-password', [
+        return view('auth.password.reset', [
             'token' => $request->route('token'),
             'email' => $request->email
         ]);

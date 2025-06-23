@@ -13,14 +13,11 @@ class Tag extends Model
     protected $primaryKey = 'tag_id';
     protected $fillable = ['nama_tag', 'slug', 'deskripsi'];
 
-    /**
-     * Boot function from Laravel.
-     */
+
     protected static function boot()
     {
         parent::boot();
 
-        // When creating a tag, automatically generate a slug from the tag name
         static::creating(function ($tag) {
             if (empty($tag->slug)) {
                 $tag->slug = Str::slug($tag->nama_tag);
@@ -28,25 +25,18 @@ class Tag extends Model
         });
     }
 
-    /**
-     * Get all articles that belong to this tag.
-     */
+
     public function articles()
     {
         return $this->belongsToMany(Article::class, 'article_tag_pivot', 'tag_id', 'article_id');
     }
 
-    /**
-     * Get all users following this tag.
-     */
-    public function users()
+        public function users()
     {
         return $this->belongsToMany(User::class, 'user_tag_pivot', 'tag_id', 'user_id');
     }
 
-    /**
-     * Get the route key for the model.
-     */
+    
     public function getRouteKeyName()
     {
         return 'slug';

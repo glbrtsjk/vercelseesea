@@ -12,9 +12,10 @@ class Category extends Model
     protected $primaryKey = 'category_id';
 
     protected $fillable = [
-        'nama_category',
+        'nama_kategori',
         'slug',
-        'deskripsi'
+        'deskripsi',
+        'gambar_kategori'
     ];
 
     public function articles()
@@ -25,5 +26,15 @@ class Category extends Model
     public function getRouteKeyName()
     {
         return 'slug';
+    }
+
+
+     public function getImageUrlAttribute()
+    {
+        if ($this->gambar_kategori) {
+            return asset('storage/' . $this->gambar_kategori);
+        }
+
+        return asset('images/default-category.jpg');
     }
 }

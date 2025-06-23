@@ -19,6 +19,9 @@ return function (Middleware $middleware) {
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'checkban' => \App\Http\Middleware\CheckBan::class,
+
+
     ]);
 
     // Web middleware group
@@ -26,9 +29,10 @@ return function (Middleware $middleware) {
         \Illuminate\Cookie\Middleware\EncryptCookies::class,
         \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
         \Illuminate\Session\Middleware\StartSession::class,
+         \App\Http\Middleware\HandleCsrfException::class,
         \Illuminate\View\Middleware\ShareErrorsFromSession::class,
         \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
-        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+      
     ]);
 
     // API middleware group

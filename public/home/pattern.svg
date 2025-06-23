@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+  <!-- Bubbles -->
+  <circle cx="20" cy="30" r="8" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.7"/>
+  <circle cx="60" cy="15" r="5" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.5"/>
+  <circle cx="100" cy="40" r="10" fill="none" stroke="#fff" stroke-width="0.7" opacity="0.6"/>
+  <circle cx="130" cy="20" r="6" fill="none" stroke="#fff" stroke-width="0.5" opacity="0.4"/>
+  <circle cx="40" cy="80" r="7" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.5"/>
+  <circle cx="90" cy="90" r="9" fill="none" stroke="#fff" stroke-width="0.7" opacity="0.6"/>
+  <circle cx="140" cy="70" r="4" fill="none" stroke="#fff" stroke-width="0.5" opacity="0.4"/>
+  
+  <!-- Seaweed/Kelp -->
+  <path d="M10 160 Q15 140 10 120 Q5 100 10 80 Q15 60 10 40" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.4"/>
+  <path d="M30 160 Q25 130 30 100 Q35 70 30 40" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.3"/>
+  <path d="M150 160 Q145 140 150 120 Q155 100 150 80" fill="none" stroke="#fff" stroke-width="0.7" opacity="0.4"/>
+  
+  <!-- Fish silhouettes -->
+  <path d="M70 60 Q80 55 90 60 T110 60 L115 65 L110 70 T90 70 Q80 75 70 70 Z" fill="none" stroke="#fff" stroke-width="0.7" opacity="0.5"/>
+  <path d="M50 110 Q58 106 66 110 T80 110 L84 113 L80 116 T66 116 Q58 120 50 116 Z" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.4"/>
+  
+  <!-- Coral-like shapes -->
+  <path d="M120 160 L120 130 Q130 120 140 130 L140 160" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.5"/>
+  <path d="M100 160 L100 140 Q90 130 80 140 L80 160" fill="none" stroke="#fff" stroke-width="0.7" opacity="0.4"/>
+</svg>

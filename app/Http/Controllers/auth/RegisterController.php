@@ -22,17 +22,35 @@ class RegisterController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
+            'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'bio' => 'nullable|string|max:500',
         ]);
 
-        $user = User::create([
+       $userData = [
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-        ]);
+        ];
 
+
+        if ($request->filled('bio')) {
+            $userData['bio'] = $request->bio;
+        }
+
+        // Handle profile image upload if provided
+        if ($request->hasFile('foto_profil')) {
+            $image = $request->file('foto_profil');
+            $filename = time() . '.' . $image->getClientOriginalExtension();
+
+            // Store image in public/profile_images directory
+            $path = $image->storeAs('profile_images', $filename, 'public');
+            $userData['foto_profil'] = $path;
+        }
+
+        $user = User::create($userData);
         Auth::login($user);
 
-        return redirect->route('user.dashboard')->with('success', 'Registration successful! Welcome to the dashboard.');
+        return redirect()->route('user.dashboard')->with('success', 'Registration successful! Welcome to the dashboard.');
     }
 }
 

@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -7,6 +8,7 @@ use App\Models\User;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class AdminUserController extends Controller
 {
@@ -17,7 +19,7 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Display a listing of the users.
+     * Menampilkan daftar pengguna.
      *
      * @return \Illuminate\Http\Response
      */
@@ -25,12 +27,12 @@ class AdminUserController extends Controller
     {
         $query = User::query();
 
-        // Filter by role if provided
+        // Filter berdasarkan peran jika disediakan
         if ($request->has('role') && $request->role) {
             $query->where('role', $request->role);
         }
 
-        // Filter by status
+        // Filter berdasarkan status
         if ($request->has('status')) {
             if ($request->status === 'banned') {
                 $query->where('is_banned', true);
@@ -39,7 +41,7 @@ class AdminUserController extends Controller
             }
         }
 
-        // Search functionality
+        // Fungsi pencarian
         if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -48,7 +50,7 @@ class AdminUserController extends Controller
             });
         }
 
-        // Sort options
+        // Opsi pengurutan
         $sort = $request->sort ?? 'newest';
         switch ($sort) {
             case 'oldest':
@@ -66,11 +68,18 @@ class AdminUserController extends Controller
 
         $users = $query->withCount(['articles', 'comments', 'communities'])->paginate(20);
 
-        return view('admin.users.index', compact('users'));
+      $totalUsers = User::count();
+      $activeUsers = User::where('last_active_at', '>=', now()->subWeek())->count();
+      $bannedUsers = User::where('is_banned', true)->count();
+
+
+        return view('admin.dashboard.users.index', compact('users', 'totalUsers', 'activeUsers', 'bannedUsers'))
+            ->with('sort', $sort)
+            ->with('search', $request->search);
     }
 
     /**
-     * Display the specified user.
+     * Menampilkan pengguna tertentu.
      *
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
@@ -79,30 +88,30 @@ class AdminUserController extends Controller
     {
         $user->load(['articles', 'communities']);
 
-        // Get activity statistics
+        // Mendapatkan statistik aktivitas
         $articles = $user->articles()->latest()->take(5)->get();
         $articleCount = $user->articles()->count();
         $commentCount = $user->comments()->count();
         $communities = $user->communities()->take(4)->get();
 
-        return view('admin.users.show', compact('user', 'articles', 'articleCount', 'commentCount', 'communities'));
+        return view('admin.dashboard.users.show', compact('user', 'articles', 'articleCount', 'commentCount', 'communities'));
     }
 
     /**
-     * Remove the specified user from storage.
+     * Menghapus pengguna tertentu dari penyimpanan.
      *
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
     public function destroy(User $user)
     {
-        // Prevent self-deletion
+        // Mencegah penghapusan diri sendiri
         if (Auth::id() === $user->user_id) {
             return redirect()->back()->with('error', 'You cannot delete your own account.');
         }
 
         try {
-            // Delete the user
+            // Menghapus pengguna
             $user->delete();
 
             return redirect()->route('admin.users.index')
@@ -114,19 +123,19 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Toggle ban status for a user
+     * Mengalihkan status banned untuk pengguna
      *
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
     public function toggleBan(User $user)
     {
-        // Prevent banning yourself
+        // Mencegah pembatasan diri sendiri
         if (Auth::id() === $user->user_id) {
             return redirect()->back()->with('error', 'You cannot ban yourself.');
         }
 
-        // Prevent banning another admin
+        // Mencegah pembatasan admin lain
         if ($user->role === 'admin' && Auth::user()->role === 'admin') {
             return redirect()->back()->with('error', 'You cannot ban another admin.');
         }
@@ -147,14 +156,14 @@ class AdminUserController extends Controller
     }
 
     /**
-     * Toggle admin role for a user
+     * Mengalihkan peran admin untuk pengguna
      *
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\Response
      */
     public function toggleAdmin(User $user)
     {
-        // Prevent changing your own role
+        // Mencegah mengubah peran diri sendiri
         if (Auth::id() === $user->user_id && User::where('role', 'admin')->count() <= 1) {
             return redirect()->back()->with('error', 'You cannot change your own admin status.');
         }
@@ -162,7 +171,7 @@ class AdminUserController extends Controller
         try {
             $isCurrentlyAdmin = $user->role === 'admin';
 
-            // Change role
+            // Mengubah peran
             $user->role = $isCurrentlyAdmin ? 'user' : 'admin';
             $user->save();
 
@@ -177,37 +186,37 @@ class AdminUserController extends Controller
     }
 public function usermanage(Request $request)
 {
-    // Get basic user statistics
+    // Mendapatkan statistik pengguna dasar
     $totalUsers = User::count();
     $bannedUsers = User::where('is_banned', true)->count();
     $newUsers = User::whereMonth('created_at', now()->month)->count();
     $activeToday = User::where('last_active_at', '>=', now()->subDay())->count();
 
-    // Get recent users
+    // Mendapatkan pengguna terbaru
     $recentUsers = User::latest('created_at')
                       ->take(5)
                       ->get();
 
-    // Get recently banned users
+    // Mendapatkan pengguna yang baru saja dibanned
     $recentBannedUsers = User::where('is_banned', true)
                             ->whereNotNull('banned_at')
                             ->latest('banned_at')
                             ->take(5)
                             ->get();
 
-    // Get top contributors (users with most articles)
+    // Mendapatkan kontributor terbaik (pengguna dengan artikel terbanyak)
     $topContributors = User::withCount('articles')
                           ->orderByDesc('articles_count')
                           ->take(5)
                           ->get();
 
-    // Get most active communities
-    $activeCommunities = \App\Models\Community::withCount('members as members_count')
+    // Mendapatkan komunitas paling aktif
+    $activeCommunities = \App\Models\Community::withCount('users as members_count')
                                             ->orderByDesc('members_count')
                                             ->take(5)
                                             ->get();
 
-    // Generate user growth data for chart (last 6 months)
+    // Membuat data pertumbuhan pengguna untuk grafik (6 bulan terakhir)
     $userGrowthData = [];
     $userGrowthLabels = [];
 
@@ -220,7 +229,7 @@ public function usermanage(Request $request)
                                ->count();
     }
 
-    // Get recent user activity (combines article creation, comments, etc)
+    // Mendapatkan aktivitas pengguna terbaru (menggabungkan pembuatan artikel, komentar, dll)
     $recentActivity = $this->getRecentActivity();
 
     return view('admin.dashboard.users.usermanage', compact(
@@ -239,13 +248,13 @@ public function usermanage(Request $request)
 }
 
 /**
- * Get recent user activity across the platform
+ * Mendapatkan aktivitas pengguna terbaru di seluruh platform
  *
  * @return \Illuminate\Support\Collection
  */
 private function getRecentActivity()
 {
-    // Get recent articles
+    // Mendapatkan artikel terbaru
     $articles = \App\Models\Article::with('user')
                                  ->latest()
                                  ->take(3)
@@ -259,7 +268,7 @@ private function getRecentActivity()
                                      ];
                                  });
 
-    // Get recent comments
+    // Mendapatkan komentar terbaru
     $comments = \App\Models\Comment::with('user')
                                  ->latest()
                                  ->take(3)
@@ -273,7 +282,7 @@ private function getRecentActivity()
                                      ];
                                  });
 
-    // Get recent community joins
+    // Mendapatkan bergabung komunitas terbaru
     $joins = \App\Models\CommunityMember::with('user', 'community')
                                       ->latest()
                                       ->take(3)
@@ -287,7 +296,7 @@ private function getRecentActivity()
                                           ];
                                       });
 
-    // Combine all activities, sort by time and take most recent
+    // Menggabungkan semua aktivitas, mengurutkan berdasarkan waktu dan mengambil yang terbaru
     return $articles->concat($comments)
                   ->concat($joins)
                   ->sortByDesc('time')

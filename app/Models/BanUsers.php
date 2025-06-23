@@ -14,6 +14,7 @@ class BanUsers extends Model
         'user_id',
         'banned_by',
         'banned_at',
+        'unbanned_at',
         'reason'
     ];
 
@@ -38,12 +39,10 @@ class BanUsers extends Model
 
     public static function canBan(User $user, Community $community)
     {
-        // Get the user's membership in the community
         $membership = $community->users()
             ->where('users.user_id', $user->user_id)
             ->first();
 
-        // Only users with moderator role can ban
         return $membership && $membership->pivot->role === 'moderator';
     }
 

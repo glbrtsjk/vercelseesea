@@ -11,6 +11,7 @@ use App\Http\Controllers\CommentReplyController;
 use App\Http\Controllers\LikeorDislikeController;
 use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\CommunityController;
+use App\Http\Controllers\CommunityEventsController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -22,73 +23,76 @@ use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminCommunityController;
 use App\Http\Controllers\Admin\AdminTagController;
 
+Route::get('/csrf-refresh', function() {
+    return response()->json(['token' => csrf_token()]);
+})->middleware('web');
 
-/*
-|--------------------------------------------------------------------------
-| Public Routes
-|--------------------------------------------------------------------------
-*/
-
-// Home page
+// Halaman beranda
 Route::get('/', [HomeController::class, 'index'])->name('home');
 /*
 |--------------------------------------------------------------------------
-| Authentication Routes
+| Rute Autentikasi
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('guest')->group(function () {
-    // Login Routes
+    // Rute Login
     Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('login', [LoginController::class, 'login']);
 
-    // Registration Routes
+    // Rute Pendaftaran
     Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('register', [RegisterController::class, 'register']);
 
-    // Password Reset Routes
+    // Rute Reset Kata Sandi
     Route::get('password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
     Route::post('password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
     Route::get('password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
     Route::post('password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
 });
 
-// Logout Route (accessible for authenticated users)
+// Rute Logout (dapat diakses untuk pengguna yang terautentikasi)
  Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 /*
 |--------------------------------------------------------------------------
-| User Dashboard Routes
+| Rute Dashboard Pengguna
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('auth')->group(function () {
-    // Dashboard redirect based on user role
+    // Pengalihan dashboard berdasarkan peran pengguna
     Route::get('/dashboard', function() {
         if (auth()->user()->isAdmin()) {
             return redirect()->route('admin.dashboard');
         }
-        return view('dashboard.index'); // Or your user dashboard view
+        return view('dashboard.index'); // Atau tampilan dashboard pengguna Anda
     })->name('dashboard');
 });
 
 
 /*
 |--------------------------------------------------------------------------
-  Admin Dashboard Routes
+  Rute Dashboard Admin
 |--------------------------------------------------------------------------
 */
-Route::prefix('admin/users')->name('admin.users.')->middleware(['auth', 'admin'])->group(function() {
-    Route::get('/', [AdminUserController::class, 'index'])->name('index');
-    Route::get('/{user}', [AdminUserController::class, 'show'])->name('show');
-    Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
-    Route::post('/{user}/ban', [AdminUserController::class, 'toggleBan'])->name('ban');
-    Route::post('/{user}/unban', [AdminUserController::class, 'toggleBan'])->name('unban');
-    Route::post('/{user}/toggle-admin', [AdminUserController::class, 'toggleAdmin'])->name('toggle-admin');
-    Route::get('/usermanage', [AdminUserController::class, 'usermanage'])->name('usermanage');
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Rute dashboard
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    // Rute pengguna
+    Route::prefix('users')->name('users.')->group(function() {
+        Route::get('/', [AdminUserController::class, 'index'])->name('index');
+        Route::get('/usermanage', [AdminUserController::class, 'usermanage'])->name('usermanage');
+        Route::get('/{user}', [AdminUserController::class, 'show'])->name('show');
+        Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
+        Route::post('/{user}/ban', [AdminUserController::class, 'toggleBan'])->name('ban');
+        Route::post('/{user}/unban', [AdminUserController::class, 'toggleBan'])->name('unban');
+        Route::post('/{user}/toggle-admin', [AdminUserController::class, 'toggleAdmin'])->name('toggle-admin');
+    });
 });
 
-// Admin profile routes
+// Rute profil admin
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/profile', [AdminDashboardController::class, 'profile'])->name('profile');
     Route::get('/profile/edit', [AdminDashboardController::class, 'editProfile'])->name('edit-profile');
@@ -96,32 +100,33 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/profile/change-password', [AdminDashboardController::class, 'changePassword'])->name('change-password');
     Route::post('/profile/update-password', [AdminDashboardController::class, 'updatePassword'])->name('update-password');
 
-    // Dashboard routes
+    // Rute dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/articles', [AdminDashboardController::class, 'articles'])->name('dashboard.article');
+    Route::get('/dashboard/funfacts', [AdminDashboardController::class, 'funfacts'])->name('dashboard.funfacts');
     Route::get('/dashboard/community', [AdminDashboardController::class, 'community'])->name('dashboard.community');
 });
 
 
 /*
 |--------------------------------------------------------------------------
-| User Dashboard Routes
+| Rute Dashboard Pengguna
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
-    // Dashboard home
+    // Beranda dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Profile management
+    // Pengelolaan profil
     Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
     Route::get('/profile/edit', [DashboardController::class, 'editProfile'])->name('edit-profile');
     Route::put('/profile', [DashboardController::class, 'updateProfile'])->name('update-profile');
 
-    // Password management
+    // Manajemen kata sandi
     Route::get('/change-password', [DashboardController::class, 'changePassword'])->name('change-password');
     Route::put('/change-password', [DashboardController::class, 'updatePassword'])->name('update-password');
 
-    // User content management
+    // Pengelolaan konten pengguna
     Route::get('/articles', [DashboardController::class, 'articles'])->name('articles');
     Route::get('/communities', [DashboardController::class, 'communities'])->name('communities');
 });
@@ -129,62 +134,93 @@ Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Community Routes
+| Rute Komunitas
 |--------------------------------------------------------------------------
 */
 
-// Public & member community routes
+// Rute komunitas publik & anggota
 Route::prefix('communities')->name('communities.')->group(function () {
-    // Public routes
+    // Rute publik
     Route::get('/', [CommunityController::class, 'index'])->name('index');
     Route::get('/{community}', [CommunityController::class, 'show'])->name('show');
+    Route::post('/', [CommunityController::class, 'store'])->name('store');
 
-    // Member-only routes (require auth)
+// Rute Acara Komunitas
+
+// Tambahkan ini di bagian rute Acara Komunitas
+Route::get('/{community}/events/create', [CommunityEventsController::class, 'create'])->name('events.create')->middleware('auth');
+Route::get('/{community}/events/calendar', [CommunityEventsController::class, 'exportCalendar'])->name('events.calendar');
+Route::get('/{community}/events', [CommunityEventsController::class, 'showEvents'])->name('events');
+Route::get('/{community}/events/{event}', [CommunityEventsController::class, 'show'])->name('events.show');
+Route::post('/{community}/events', [CommunityEventsController::class, 'store'])->name('events.store');
+Route::put('/{community}/events/{event}', [CommunityEventsController::class, 'update'])->name('events.update');
+Route::delete('/{community}/events/{event}', [CommunityEventsController::class, 'delete'])->name('events.delete');
+Route::get('/{community}/events/{event}/edit', [CommunityEventsController::class, 'edit'])->name('events.edit');
+    // Rute khusus anggota (memerlukan autentikasi)
     Route::middleware('auth')->group(function() {
         Route::get('/{community}/join', [CommunityController::class, 'showJoinForm'])->name('join.show');
         Route::post('/{community}/join', [CommunityController::class, 'join'])->name('join');
         Route::get('/{community}/chat', [CommunityController::class, 'chat'])->name('chat');
-        Route::post('/{community}/leave', [CommunityController::class, 'leave'])->name('leave');
+        Route::delete('/{community}/leave', [CommunityController::class, 'leave'])->name('leave');
+        Route::post('/{community}/update-activity', [CommunityController::class, 'updateActivity'])->name('update-activity');
     });
 });
 
-Route::middleware(['auth', 'admin'])->name('admin.')->prefix('admin')->group(function () {
-    // Show & manage communities
-    Route::resource('communities', AdminCommunityController::class);
+Route::middleware([ 'auth', 'admin'])->name('admin.')->prefix('admin')->group(function () {
+    // Tampilkan & kelola komunitas
+    Route::get('/communities', [AdminCommunityController::class, 'index'])->name('communities.index');
+    Route::get('/communities/create', [AdminCommunityController::class, 'create'])->name('communities.create');
+    Route::post('/communities', [AdminCommunityController::class, 'store'])->name('communities.store');
+    Route::get('/communities/{community}/edit', [AdminCommunityController::class, 'edit'])->name('communities.edit');
+    Route::put('/communities/{community}', [AdminCommunityController::class, 'update'])->name('communities.update');
+    Route::delete('/communities/{community}', [AdminCommunityController::class, 'destroy'])->name('communities.destroy');
+   // Route::resource('communities', AdminCommunityController::class);
+    Route::get('/communities/{community}/initiatives/create', [AdminCommunityController::class, 'createInitiative'])->name('communities.initiatives.create');
+    Route::post('/communities/{community}/initiatives', [AdminCommunityController::class, 'storeInitiative'])->name('communities.initiatives.store');
+    Route::get('/communities/{community}/initiatives/{initiative}/edit', [AdminCommunityController::class, 'editInitiative']) ->name('communities.initiatives.edit');
+    Route::put('/communities/{community}/initiatives/{initiative}', [AdminCommunityController::class, 'updateInitiative'])->name('communities.initiatives.update');
+    Route::delete('/communities/{community}/initiatives/{initiative}', [AdminCommunityController::class, 'destroyInitiative']) ->name('communities.initiatives.destroy');
    });
 
 
 /*
 |--------------------------------------------------------------------------
-|  Chat Routes
+|  Rute Obrolan
 |--------------------------------------------------------------------------
 */
-// Community chat routes
+// Rute obrolan komunitas
 Route::middleware(['auth'])->prefix('communities')->name('communities.')->group(function () {
-    // View chat
-    Route::get('{community}/chat', [CommunityController::class, 'chat'])
-        ->name('chat');
-
-    // Message operations
+    // Lihat obrolan
+    Route::get('{community}/chat', [CommunityController::class, 'chat'])->name('chat');
+    Route::get('{community}/anggota', [CommunityController::class, 'members'])->name('members');
+    // Operasi pesan
     Route::post('{community}/messages', [CommunityController::class, 'storeMessage'])
         ->name('messages.store');
     Route::delete('{community}/messages/{message}', [CommunityController::class, 'deleteMessage'])
         ->name('messages.delete');
 
-    // Moderation functions
+    // Fungsi moderasi
     Route::post('{community}/lock-chat', [CommunityController::class, 'lockChat'])
         ->name('lock-chat');
     Route::get('{community}/moderation', [CommunityController::class, 'moderation'])
         ->name('moderation');
+   Route::post('{community}/mute-user-form', [CommunityController::class, 'muteUser'])
+    ->name('mute-user-form');
+Route::post('{community}/ban-user-form', [CommunityController::class, 'banUser'])
+    ->name('ban-user-form');
+Route::post('{community}/unmute-user/{user}', [CommunityController::class, 'unmute'])
+    ->name('unmute-user-form');
+Route::post('{community}/unban-user/{user}', [CommunityController::class, 'unban'])
+    ->name('unban-user-form');
 
-    // User management within community
-    Route::post('{community}/ban/{user}', [CommunityController::class, 'banUser'])
+    // Pengelolaan pengguna dalam komunitas
+    Route::post('{community}/ban/{user}', [CommunityController::class, 'BanUsers'])
         ->name('ban-user');
-    Route::post('{community}/unban/{user}', [CommunityController::class, 'unbanUser'])
+    Route::post('{community}/unban/{user}', [CommunityController::class, 'unBanUsers'])
         ->name('unban-user');
-    Route::post('{community}/mute/{user}', [CommunityController::class, 'muteUser'])
+    Route::post('{community}/mute/{user}', [CommunityController::class, 'MuteUsers'])
         ->name('mute-user');
-    Route::post('{community}/unmute/{user}', [CommunityController::class, 'unmuteUser'])
+    Route::post('{community}/unmute/{user}', [CommunityController::class, 'unMuteUsers'])
         ->name('unmute-user');
     Route::post('{community}/promote/{user}', [CommunityController::class, 'promoteModerator'])
         ->name('promote-moderator');
@@ -193,17 +229,17 @@ Route::middleware(['auth'])->prefix('communities')->name('communities.')->group(
 });
 
 /**--------------------------------------------------------------------------
-| Article Routes
+| Rute Artikel
 |--------------------------------------------------------------------------
 */
 Route ::prefix('articles')->name('articles.')->group(function () {
-    // Public article routes
+    // Rute artikel publik
     Route::get('/', [ArticleController::class, 'index'])->name('index');
     Route::get('/search', [ArticleController::class, 'search'])->name('search');
 
-// Protected article routes (require authentication)
+// Rute artikel terproteksi (memerlukan autentikasi)
 Route::middleware(['auth'])->group(function () {
-    // Article CRUD operations
+    // Operasi CRUD artikel
     Route::middleware('auth')->group(function () {
         Route::get('/create', [ArticleController::class, 'create'])->name('create');
         Route::post('/', [ArticleController::class, 'store'])->name('store');
@@ -213,11 +249,11 @@ Route::middleware(['auth'])->group(function () {
     });
   Route::get('/{article:slug}', [ArticleController::class, 'show'])->name('show');
 
-    // Article reactions
+    // Reaksi artikel
     Route::post('/{article:slug}/reactions', [ArticleController::class, 'react'])->name('react');
     Route::delete('/{article:slug}/reactions', [ArticleController::class, 'unreact'])->name('unreact');
 
-    // Article comments
+    // Komentar artikel
     Route::post('/{article:slug}/comments', [ArticleController::class, 'comment'])->name('comment');
     Route::put('/{article:slug}/comments/{comment}', [ArticleController::class, 'updateComment'])->name('update-comment');
     Route::delete('/{article:slug}/comments/{comment}', [ArticleController::class, 'deleteComment'])->name('delete-comment');
@@ -228,21 +264,22 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.articles.')->group(function () {
     Route::get('/articles', [AdminArticleController::class, 'index'])->name('index');
     Route::get('/articles/pending', [AdminArticleController::class, 'pending'])->name('pending');
-    Route::post('/articles/{article}/approve', [AdminArticleController::class, 'approve'])->name('approve');
+    Route::match(['get', 'post'], '/articles/{article}/approve', [AdminArticleController::class, 'approve'])->name('approve');
     Route::post('/articles/{article}/reject', [AdminArticleController::class, 'reject'])->name('reject');
 });
 
 
 /**--------------------------------------------------------------------------
-| FunFacts Routes
+| Rute Fakta Menarik
 |--------------------------------------------------------------------------
 */
 
-// Funfact Routes
+// Rute Fakta Menarik
 Route::prefix('funfacts')->name('funfacts.')->group(function () {
-    // Public routes
+    // Rute publik
     Route::get('/', [FunfactController::class, 'index'])->name('index');
     Route::get('/{funfact}', [FunfactController::class, 'show'])->name('show');
+    Route::get('/search', [FunfactController::class, 'search'])->name('search');
 });
 
     Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.funfacts.')->group(function () {
@@ -255,7 +292,7 @@ Route::prefix('funfacts')->name('funfacts.')->group(function () {
         Route::post('/manage/update-order', [FunfactController::class, 'updateOrder'])->name('update-order');
     });
 /**--------------------------------------------------------------------------
-| Comment and Comment Reply Routes
+| Rute Komentar dan Balasan Komentar
 |--------------------------------------------------------------------------
 */
 Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
@@ -268,7 +305,7 @@ Route::delete('/comments/{comment}/replies/{reply}', [CommentReplyController::cl
 
 /*
 |--------------------------------------------------------------------------
-| LikeDislike Routes
+| Rute Suka dan Tidak Suka
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function() {
@@ -279,7 +316,7 @@ Route::middleware(['auth'])->group(function() {
 
 /*
 |--------------------------------------------------------------------------
-| Reaction Routes
+| Rute Reaksi
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->group(function() {
@@ -298,21 +335,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 });
 
 /*|--------------------------------------------------------------------------
-| Tag Routes
+| Rute Tag
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function() {
     Route::get('/tags', [AdminTagController::class, 'index'])->name('tags.index');
     Route::get('/tags/create', [AdminTagController::class, 'create'])->name('tags.create');
     Route::post('/tags', [AdminTagController::class, 'store'])->name('tags.store');
-    Route::get('/tags/{tag}/edit', [AdminTagController::class, 'edit'])->name('tags.edit');
-    Route::put('/tags/{tag}', [AdminTagController::class, 'update'])->name('tags.update');
+    Route::get('/tags/{tag:tag_id}/edit', [AdminTagController::class, 'edit'])->name('tags.edit');
+     Route::put('/tags/{tag}', [AdminTagController::class, 'update'])->name('tags.update');
     Route::delete('/tags/{tag}', [AdminTagController::class, 'destroy'])->name('tags.destroy');
     Route::post('/tags/merge', [AdminTagController::class, 'merge'])->name('tags.merge');
 });
 
 /*|--------------------------------------------------------------------------
-| Public  Tag Resources
+| Rute Tag Publik
 |--------------------------------------------------------------------------
 */
 Route::prefix('tags')->name('tags.')->group(function() {
@@ -323,7 +360,7 @@ Route::prefix('tags')->name('tags.')->group(function() {
     Route::get('/suggest', [TagController::class, 'suggestTags'])->name('suggest');
     Route::get('/{tag:slug}', [TagController::class, 'show'])->name('show');
 
-    // Auth required routes
+    // Rute yang memerlukan autentikasi
     Route::middleware('auth')->group(function() {
         Route::post('/{tag:slug}/follow', [TagController::class, 'follow'])->name('follow');
         Route::post('/{tag:slug}/unfollow', [TagController::class, 'unfollow'])->name('unfollow');
