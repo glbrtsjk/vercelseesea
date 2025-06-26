@@ -11,8 +11,8 @@
     "env": {
         "APP_ENV": "production",
         "APP_DEBUG": "true",
-        "APP_URL": "https://seasea.vercel.com",
-
+        "APP_URL": "https://seevercel-jetni09ad-gilberts-projects-c2446c7a.vercel.app/",
+        "APP_KEY":"base64:XSoqXDuJQwPLtFnTD0zhr+5Z6/DpEnlthDBVPjPJlcc=",
         "APP_CONFIG_CACHE": "/tmp/config.php",
         "APP_EVENTS_CACHE": "/tmp/events.php",
         "APP_PACKAGES_CACHE": "/tmp/packages.php",
