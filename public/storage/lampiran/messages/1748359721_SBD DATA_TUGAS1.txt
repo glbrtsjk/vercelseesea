@@ -1,0 +1,20 @@
+    ('210506','Toni Kross','Kristen','90'),
+    ('210507','Dimas Rajagukguk','Kristen','75'),
+    ('210508','Ahmad Malik','Islam','65'),
+    ('210509','Jusuf Sulaiman','Islam','95'),
+    ('210510','Gorgoe Halim','Kristen','94'),
+    ('210511','Johnson Lie','Buddha','78'),
+    ('210512','Vincent Lau','Buddha','94')
+    ('210514','Steven','Kristen','70')
+
+
+    ('210506','90','A','Internet'),
+    ('210507','75','B','Algorithma'),
+    ('210508','65','C','Basis Data'),
+    ('210509','95','A','Jaringan'),
+    ('2105010','94','A','Pemograman Objek'),
+    ('2105011','78','B','Pemograman Web'),
+    ('2105012','94','A','Basis Data'),
+    ('2105014','70','B','Jaringan')
+
+UPDATE nilai SET npm = '210511' WHERE npm = '2105011';
